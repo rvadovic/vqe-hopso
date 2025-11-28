@@ -1,1 +1,1 @@
-# vqe-hopso
+# Utilization of HOPSO optimizer within Variational Quantum Eigenslovers
