@@ -1,0 +1,24 @@
+[project]
+name = "vqe-hopso"
+version = "0.1.0"
+description = "Utilization of HOPSO optimizer within VQEs and comparison"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "mpi4py",
+    "matplotlib",
+    "qiskit",
+    "qiskit_aer",
+    "h5py",
+    "pathlib"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

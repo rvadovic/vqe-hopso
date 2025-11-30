@@ -1,0 +1,7 @@
+numpy
+mpi4py
+matplotlib
+qiskit
+qiskit_aer
+h5py
+pathlib
