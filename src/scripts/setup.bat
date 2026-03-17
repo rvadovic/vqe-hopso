@@ -1,9 +1,7 @@
 
-rem --- Load Intel oneAPI ---
-call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-
+ENV_NAME="cwq"
 rem --- Activate Conda Environment ---
-call conda activate cwq
+call conda activate $ENV_NAME
 
 rem --- Set MPI compiler for MPI4Py / mpiCC ---
 set MPICC=mpicc

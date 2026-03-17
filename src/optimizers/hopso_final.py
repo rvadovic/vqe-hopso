@@ -38,7 +38,7 @@ def hopso(cost_fn, hp, num_particles, runs, dimension, max_cut, e_min, init_posi
     """
 
     import numpy as np
-    from tqdm import tqdm
+    #from tqdm import tqdm
 
     # Unpack hyperparameters
     w1, w2, tm, lamb = hp
@@ -55,7 +55,7 @@ def hopso(cost_fn, hp, num_particles, runs, dimension, max_cut, e_min, init_posi
 
         # Personal best
         personal_best_positions = positions.copy()
-        personal_best_values = np.array([cost_fn(p) for p in positions])
+        personal_best_values = np.array(cost_fn(positions))
 
         # Global best
         gbest_idx = np.argmin(personal_best_values)
@@ -119,7 +119,8 @@ def hopso(cost_fn, hp, num_particles, runs, dimension, max_cut, e_min, init_posi
                                          - lamb*np.cos(omega*t[i] + theta[i]))
 
                 # Evaluate cost
-                current_value = cost_fn(positions[i])
+                position = positions[i].reshape(1, dimension)
+                current_value = cost_fn(position)[0]
                 #print(current_value,i)
 
                 # -------------
