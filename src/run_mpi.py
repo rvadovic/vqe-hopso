@@ -1,21 +1,22 @@
 from mpi4py import MPI
 import numpy as np
+
 #from costF.costF_2q_IvaH2_qiskit import cost_function_1 as cost_fn_h2
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
-from costF.costF_4q_H2_qiskit import cost_function_noiseless
-from costF.costF_4q_H2_qiskit import cost_function_shot_noise
-from costF.costF_4q_H2_qiskit import cost_function_gate_noise
-from costF.costF_4q_H2_qiskit import cost_function_gate_noise_zne
-from costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
-from costF.costF_4q_H2_qiskit import E_exact
+from src.costF.costF_4q_H2_qiskit import cost_function_noiseless, prepare_estimators_zne, cost_function_gate_noise, cost_function_gate_noise_zne, cost_function_shot_noise
+from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
+from src.costF.costF_4q_H2_qiskit import E_exact
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_lih
-from optimizers.hopso_final_mpi import hopso
+from src.optimizers.hopso_final_mpi import hopso
+from src.utils.result_handler_csv import write_to_csv
 from time import perf_counter
 
-# Define parameters
+# Define 
+optimizer = hopso
+cost_F = cost_function_gate_noise
 hp = [1, 1, 2*np.pi, 0.0583]
-num_particles = 12
+num_particles = 12 
 particles_per_rank = 2
 runs = 10
 dimension = ansatz_h2.num_parameters
@@ -52,17 +53,22 @@ if size != num_particles/particles_per_rank:
 
 if rank == 0:
     print(f"Initialization complete. Starting optimization with {runs} runs and {num_particles} particles per run and {particles_per_rank} particles per rank")
+    results = []
+
+if(cost_F.__name__ == "cost_function_gate_noise_zne"):
+        prepare_estimators_zne()
 
 # Run HOPSO
 for i in range(runs):
     # Another barrier before starting main computation
     comm.Barrier()
     start_time = perf_counter()
-    hopso(cost_function_gate_noise_zne, hp, i, dimension, maxcut, e_min, particles_per_rank, max_iterations, comm)
+    hopso(cost_F, hp, i, dimension, maxcut, e_min, particles_per_rank, max_iterations, comm)
     comm.Barrier()
     end_time = perf_counter()
-    if(rank == 0): 
-        error = abs(E_exact-e_min[i])
-        satisfies = error < 1.59e-3  # Chemical accuracy threshold
-        print(str(i) + ". e_min: " + str(e_min[i]) + ", error: " + str(error) + ", satisfies: " + str(satisfies))
-        print(str(i) + ". time: " + str(end_time - start_time))
+    if(rank == 0):
+        time = end_time - start_time
+        results.append({"run": i+1, "final_energy": np.min(e_min), "time": time})
+
+if(rank == 0):
+    write_to_csv(cost_F.__name__, optimizer.__name__, results)

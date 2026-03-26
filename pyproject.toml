@@ -10,7 +10,8 @@ dependencies = [
     "qiskit",
     "qiskit_aer",
     "h5py",
-    "pathlib"
+    "pathlib",
+    "pandas"
 ]
 
 [build-system]
