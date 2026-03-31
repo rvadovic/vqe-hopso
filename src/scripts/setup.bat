@@ -1,13 +1,10 @@
+call conda activate cwq
 
-ENV_NAME="cwq"
-rem --- Activate Conda Environment ---
-call conda activate $ENV_NAME
+call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
 
-rem --- Set MPI compiler for MPI4Py / mpiCC ---
-set MPICC=mpicc
-
-rem --- Go to project directory ---
 cd /d %~dp0
+
+set MPICC=mpicc
 
 echo Environment initialized.
 

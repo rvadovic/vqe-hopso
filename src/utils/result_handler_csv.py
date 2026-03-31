@@ -19,8 +19,14 @@ def write_to_csv(costF_name, optimzer_name, results):
 def parse_filename(filename):
     base = filename.replace('.csv', '')
     parts = base.split('_')
-    optimizer = parts[0]
-    costF = '_'.join(parts[1:])
+    i = 1
+    part0 = parts[0]
+
+    if(part0 == "mpi"):
+        optimizer = '_'.join(parts[:2])
+        i+=1
+
+    costF = '_'.join(parts[i:])
     return optimizer, costF
 
 def rename_cols(agg_df, prefix=''):

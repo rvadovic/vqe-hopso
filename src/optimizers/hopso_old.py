@@ -8,7 +8,7 @@
 
 # HOPSO algorithm
 import numpy as np
-def hopso(cost_fn, hp, num_particles, runid, dimension, max_cut, e_min, vectors, vel_mag, gbest, max_iterations):
+def hopso(cost_fn, hp, num_particles, runs, dimension, max_cut, e_min, vectors, vel_mag, gbest, max_iterations):
     # Calculate constants
 
     s = hp[3]

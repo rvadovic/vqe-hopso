@@ -31,18 +31,18 @@ def attractor_calc(p, g, w1, w2):
     a = g + alpha * diff
     return wrap_pi(a)          # keep in (-π, π]
 
-def invalid_theta_test(cos_th_i, dead, personal_best_value, theta, rank, iteration):
+def invalid_theta_test(cos_th_i, dead, personal_best_value, theta, run_id, rank, iteration):
     invalid = np.any(cos_th_i < -1) | np.any(cos_th_i > 1) | np.isnan(cos_th_i).any()
     if np.any(invalid):
 
         personal_best_value = np.inf
         dead = True
-        print(f"Particle {rank} killed at iteration {iteration}.")
+        print(f"[Run {run_id}] Particle {rank} killed at iteration {iteration} after pbest update.")
     else:
         theta = np.arccos(cos_th_i)
     return theta, dead, personal_best_value
 
-def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iterations=500, comm=None):
+def mpi_ahopso(cost_fn, hp, run_id, dimension, max_cut, e_min, particles_per_rank, max_iterations=500, comm=None):
     """
     Demonstration: each particle updates its attractor/amplitude/theta
     IMMEDIATELY after it finds a better personal best.
@@ -50,7 +50,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iteration
     a SWARM-WIDE attractor/amplitude/theta update if there's a new global best.
     """
     # Unpack hyperparameters
-    w1, w2, tm, lamb = hp
+    w1, w2, tm, lamb = hp # why lamb = hp #
 
     omega = 1.0
 
@@ -100,7 +100,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iteration
 
     iteration = 0
 
-    theta, dead, personal_best_value = invalid_theta_test(cos_theta, dead, personal_best_value, theta, rank, iteration)
+    theta, dead, personal_best_value = invalid_theta_test(cos_theta, dead, personal_best_value, theta, run_id, rank, iteration)
 
     while iteration < max_iterations:  
         # -------------
@@ -155,7 +155,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iteration
                 # Recompute cos_theta for that particle
                 cos_th_i = (position[improved] - attractor[improved])/A[improved]
                 # Kill if invalid
-                theta, dead, personal_best_value = invalid_theta_test(cos_th_i, dead, personal_best_value, theta, rank, iteration)
+                theta, dead, personal_best_value = invalid_theta_test(cos_th_i, dead, personal_best_value, theta, run_id, rank, iteration)
 
 
         # -------------
@@ -191,9 +191,9 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iteration
             cos_theta = (position - attractor)/A
             if dead:
                 continue
-            theta, dead, personal_best_value = invalid_theta_test(cos_theta, dead, personal_best_value, theta, rank, iteration)
+            theta, dead, personal_best_value = invalid_theta_test(cos_theta, dead, personal_best_value, theta, run_id, rank, iteration)
         
         iteration += 1
-    
-    if(rank == 0):
-        return global_best_value
+
+               
+    e_min.append(global_best_value)

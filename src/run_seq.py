@@ -3,21 +3,43 @@ import numpy as np
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_8qlih
-from costF.costF_4q_H2_qiskit import cost_function_noiseless
-from costF.costF_4q_H2_qiskit import cost_function_shot_noise
-from costF.costF_4q_H2_qiskit import cost_function_gate_noise
-from costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
-from costF.costF_4q_H2_qiskit import E_exact    
-from optimizers.hopso_final import hopso
+from src.costF.costF_4q_H2_qiskit import cost_function_noiseless
+from src.costF.costF_4q_H2_qiskit import cost_function_shot_noise
+from src.costF.costF_4q_H2_qiskit import cost_function_gate_noise
+from src.costF.costF_4q_H2_qiskit import cost_function_gate_noise_zne, prepare_estimators_zne
+from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
+from src.costF.costF_4q_H2_qiskit import E_exact
+from src.optimizers.hopso_final import hopso
+from src.optimizers.cobyla import cobyla
+from src.optimizers.de import de
+from src.optimizers.pso import pso
 from time import perf_counter
+from src.utils.result_handler_csv import write_to_csv
 
-e_min = []
+def cost_function_single(angles):
+    angles = angles.reshape(1, dimension)
+    return costf(angles)[0]
 
-start_time = perf_counter()
-hopso(cost_function_noiseless, [1,1,2*np.pi,0.05], 12, 10, ansatz_h2.num_parameters, 2.05, e_min)
-end_time = perf_counter()
-e_min = np.min(e_min)
-error = abs(E_exact-e_min)
-satisfies = error < 1.59e-3  # Chemical accuracy threshold
-print(". e_min: " + str(e_min) + ", error: " + str(error) + ", satisfies: " + str(satisfies))
-print(". time: " + str(end_time - start_time))
+optimizers = [pso, cobyla, de, hopso]
+costfs = [cost_function_noiseless, cost_function_shot_noise, cost_function_gate_noise, cost_function_gate_noise_zne]
+
+optimizer = cobyla
+costf = cost_function_noiseless
+runs = 10
+dimension = ansatz_h2.num_parameters
+
+results = []
+
+if(costf.__name__ == "cost_function_gate_noise_zne"):
+    prepare_estimators_zne()
+
+for i in range(runs):
+    start_time = perf_counter()
+    e = optimizer(cost_function_single, dimension)
+    #hopso(cost_function_noiseless, [1,1,2*np.pi,0.05], 12, 10, ansatz_h2.num_parameters, 2.05, e_min)
+    end_time = perf_counter()
+    time = end_time - start_time
+    results.append({"run": i+1, "final_energy": e, "time": time})
+    
+write_to_csv(costf.__name__, optimizer.__name__, results)
+    

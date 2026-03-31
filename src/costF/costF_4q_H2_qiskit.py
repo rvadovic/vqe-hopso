@@ -112,7 +112,7 @@ def cost_function_gate_noise_zne(angles):
             result = job.result()
             raw_energies.append(result[0].data.evs)
         # extrapolate
-        mit = extrapolate(noise_factors, np.real(raw_energies))
+        mit = extrapolate(noise_factors, raw_energies)
         mitigated.append(mit)
     return np.array(mitigated)
 
@@ -122,7 +122,7 @@ def cost_function_noiseless(angles):
     job = estimator_noiseless.run(pubs)
     result = job.result() # It will block until the job finishes.
     energies = np.array([res.data.evs for res in result])
-    return np.real(energies)
+    return energies
 
 def cost_function_shot_noise(angles):
     bound_circuits = [ansatz.assign_parameters(a) for a in angles]
@@ -130,7 +130,7 @@ def cost_function_shot_noise(angles):
     job = estimator_shot_noise.run(pubs)
     result = job.result() # It will block until the job finishes.
     energies = np.array([res.data.evs for res in result])
-    return np.real(energies)
+    return energies
 
 def cost_function_gate_noise(angles):
     bound_circuits = [ansatz.assign_parameters(a) for a in angles]
@@ -138,4 +138,4 @@ def cost_function_gate_noise(angles):
     job = estimator_gate_noise.run(pubs)
     result = job.result() # It will block until the job finishes.
     energies = np.array([res.data.evs for res in result])
-    return np.real(energies)
+    return energies
