@@ -101,7 +101,7 @@ def prepare_estimators_zne():
         )
         estimators_zne.append(estimator)
 
-def cost_function_gate_noise_zne(angles):
+def cost_function_gate_noise_zne_1510(angles):
     mitigated = []
     for a in angles:
         raw_energies = []

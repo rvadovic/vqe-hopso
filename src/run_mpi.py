@@ -3,7 +3,7 @@ import numpy as np
 
 #from costF.costF_2q_IvaH2_qiskit import cost_function_1 as cost_fn_h2
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
-from src.costF.costF_4q_H2_qiskit import cost_function_noiseless, prepare_estimators_zne, cost_function_gate_noise, cost_function_gate_noise_zne, cost_function_shot_noise
+from src.costF.costF_4q_H2_qiskit import cost_function_noiseless, prepare_estimators_zne, cost_function_gate_noise, cost_function_gate_noise_zne_1510, cost_function_shot_noise
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
 #from costF.costF_8q_LiH import cost_fn_8qlih
@@ -14,17 +14,16 @@ from src.optimizers.async_hopso_mpi import mpi_ahopso
 from src.utils.result_handler_csv import write_to_csv
 from time import perf_counter
 
-# Define 
+# Define
 optimizer = mpi_hopso
-cost_F = cost_function_gate_noise_zne
+cost_F = cost_function_gate_noise_zne_1510
 hp = [1, 1, 2*np.pi, 0.058333]
 num_particles = 4 
-particles_per_rank = 2
+particles_per_rank = 1
 runs = 100
 dimension = ansatz_h2.num_parameters
 maxcut = 2.05
 max_iterations = 500
-#e_min = []
 
 # Initialize MPI
 comm = MPI.COMM_WORLD
@@ -57,7 +56,7 @@ if rank == 0:
     print(f"Initialization complete. Starting optimization with {runs} runs and {num_particles} particles per run and {particles_per_rank} particles per rank")
     results = []
 
-if(cost_F.__name__ == "cost_function_gate_noise_zne"):
+if(cost_F.__name__ == "cost_function_gate_noise_zne_1510"):
         prepare_estimators_zne()
 
 # Run HOPSO
@@ -66,6 +65,7 @@ for i in range(runs):
     comm.Barrier()
     if(rank == 0):
         start_time = perf_counter()
+
     e = mpi_hopso(cost_F, hp, dimension, maxcut, particles_per_rank, max_iterations, comm)
     comm.Barrier()
     if(rank == 0):
