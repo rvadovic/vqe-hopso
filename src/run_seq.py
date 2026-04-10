@@ -3,10 +3,7 @@ import numpy as np
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_8qlih
-from src.costF.costF_4q_H2_qiskit import cost_function_noiseless
-from src.costF.costF_4q_H2_qiskit import cost_function_shot_noise
-from src.costF.costF_4q_H2_qiskit import cost_function_gate_noise
-from src.costF.costF_4q_H2_qiskit import cost_function_gate_noise_zne, prepare_estimators_zne
+from src.costF.costF_4q_H2_qiskit import noiseless, prepare_estimators_zne, gate_noise, gate_noise_zne_richardson, shot_noise, gate_noise_zne_mitiq, gate_noise_pec_mitiq, gate_noise_zne_linear, gate_noise_zne_exponential
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
 from src.optimizers.hopso_final import hopso
@@ -21,11 +18,11 @@ def cost_function_single(angles):
     return costf(angles)[0]
 
 optimizers = [pso, cobyla, de, hopso]
-costfs = [cost_function_noiseless, cost_function_shot_noise, cost_function_gate_noise, cost_function_gate_noise_zne]
+costfs = [noiseless, shot_noise, gate_noise, gate_noise_zne_richardson, gate_noise_zne_mitiq, gate_noise_pec_mitiq, gate_noise_zne_linear, gate_noise_zne_exponential]
 
-optimizer = cobyla
-costf = cost_function_noiseless
-runs = 10
+optimizer = hopso
+costf = noiseless
+runs = 100
 dimension = ansatz_h2.num_parameters
 
 results = []
@@ -35,7 +32,7 @@ if(costf.__name__ == "cost_function_gate_noise_zne"):
 
 for i in range(runs):
     start_time = perf_counter()
-    e = optimizer(cost_function_single, dimension)
+    e = optimizer(costf, dimension)
     #hopso(cost_function_noiseless, [1,1,2*np.pi,0.05], 12, 10, ansatz_h2.num_parameters, 2.05, e_min)
     end_time = perf_counter()
     time = end_time - start_time

@@ -3,24 +3,27 @@ import numpy as np
 
 #from costF.costF_2q_IvaH2_qiskit import cost_function_1 as cost_fn_h2
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
-from src.costF.costF_4q_H2_qiskit import cost_function_noiseless, prepare_estimators_zne, cost_function_gate_noise, cost_function_gate_noise_zne_1510, cost_function_shot_noise
+from src.costF.costF_4q_H2_qiskit import noiseless, shot_noise_1k, fakeManilaV2, fakeAthensV2, fakeBogotaV2, gate_noise_1k, shot_noise_5k, shot_noise_100, prepare_estimators_zne_100k, gate_noise_5k, gate_noise_zne_richardson_5k, prepare_estimators_zne_5k, shot_noise_5k, gate_noise_zne_mitiq_linear_5k, gate_noise_zne_mitiq_richardson_5k, gate_noise_zne_mitiq_exponential_5k, gate_noise_pec_mitiq_5k, gate_noise_zne_linear_5k, gate_noise_zne_exponential_5k, gate_noise_pec_mitiq_100k, gate_noise_zne_linear_100k, gate_noise_zne_mitiq_linear_100k, gate_noise_zne_mitiq_richardson_100k, gate_noise_zne_mitiq_exponential_100k, gate_noise_zne_richardson_100k, gate_noise_100k, shot_noise_100k
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_lih
 from src.optimizers.hopso_final_mpi import mpi_hopso
-from src.optimizers.async_hopso_mpi import mpi_ahopso
 #from src.optimizers.pso_mpi import pso_mpi
 from src.utils.result_handler_csv import write_to_csv
 from time import perf_counter
 
+def set_seed(base_seed, run, rank):
+    seed = base_seed + run * 10000 + rank
+    return np.random.default_rng(seed)
+
 # Define
 optimizer = mpi_hopso
-cost_F = cost_function_gate_noise_zne_1510
-hp = [1, 1, 2*np.pi, 0.058333]
-num_particles = 4 
-particles_per_rank = 1
-runs = 100
+cost_F = shot_noise_1k
+hp = [1, 1, 2*np.pi, 0.07]
+num_particles = 12
+particles_per_rank = 2
+runs = 10
 dimension = ansatz_h2.num_parameters
 maxcut = 2.05
 max_iterations = 500
@@ -56,17 +59,21 @@ if rank == 0:
     print(f"Initialization complete. Starting optimization with {runs} runs and {num_particles} particles per run and {particles_per_rank} particles per rank")
     results = []
 
-if(cost_F.__name__ == "cost_function_gate_noise_zne_1510"):
-        prepare_estimators_zne()
+if(cost_F.__name__ == "gate_noise_zne_richardson_100k" or cost_F.__name__ == "gate_noise_zne_linear_100k" or cost_F.__name__ == "gate_noise_zne_exponential_100k"):
+        prepare_estimators_zne_100k()
+
+if(cost_F.__name__ == "gate_noise_zne_richardson_5k" or cost_F.__name__ == "gate_noise_zne_linear_5k" or cost_F.__name__ == "gate_noise_zne_exponential_5k"):
+        prepare_estimators_zne_5k()
 
 # Run HOPSO
 for i in range(runs):
     # Another barrier before starting main computation
+    rng = set_seed(42, i, rank)
     comm.Barrier()
     if(rank == 0):
         start_time = perf_counter()
 
-    e = mpi_hopso(cost_F, hp, dimension, maxcut, particles_per_rank, max_iterations, comm)
+    e = mpi_hopso(cost_F, hp, dimension, maxcut, particles_per_rank, max_iterations, comm, rng)
     comm.Barrier()
     if(rank == 0):
         end_time = perf_counter()

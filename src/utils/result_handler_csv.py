@@ -21,7 +21,7 @@ def parse_filename(filename):
     parts = base.split('_')
     i = 1
     part0 = parts[0]
-
+    optimizer = part0
     if(part0 == "mpi"):
         optimizer = '_'.join(parts[:2])
         i+=1

@@ -2,10 +2,10 @@ import numpy as np
 
 # Configuration
 
-hp = [1, 1, 2*np.pi, 0.0583] #w1, w2, tm, lambda
-num_particles = 12
+hp = [1, 1, 2*np.pi, 0.0583333333] #w1, w2, tm, lambda
+num_particles = 10
 max_cut = 2.05
-max_iterations = 500
+max_iterations = 600
 
 def velocities_for_target_amplitude(positions, attractors, A_target, omega=1.0, lamb=0.05, rng=None):
     """
@@ -141,7 +141,7 @@ def hopso(cost_fn, dimension):
                 
 
                 # Now update attractor dimensionwise for this particle
-                attractors[i] =attractor_calc(personal_best_positions[i], global_best_position, w1, w2)
+                attractors[i] = attractor_calc(personal_best_positions[i], global_best_position, w1, w2)
 
                 # Recompute amplitude for that particle
                 A1_i = np.sqrt(
