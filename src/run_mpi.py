@@ -19,11 +19,10 @@ def set_seed(base_seed, run, rank):
 
 # Define
 optimizer = mpi_hopso
-cost_F = shot_noise_1k
+cost_F = shot_noise_100k
 hp = [1, 1, 2*np.pi, 0.07]
 num_particles = 12
-particles_per_rank = 2
-runs = 10
+runs = 100
 dimension = ansatz_h2.num_parameters
 maxcut = 2.05
 max_iterations = 500
@@ -42,21 +41,21 @@ print(f"Process {rank}/{size} ready")
 # Broadcast initial parameters to all nodes
 #total_tasks = runs * num_particles
 
-if size != num_particles/particles_per_rank:
+if size != num_particles:
     if rank == 0:
-        print(f"Warning: Number of cores ({size}) doesn't match total tasks ({num_particles/particles_per_rank})")
+        print(f"Warning: Number of cores ({size}) doesn't match total tasks ({num_particles})")
     
     # Adjust num_particles to match available cores
-    num_particles = size*particles_per_rank
+    num_particles = size
 
     if rank == 0:
-        print(f"Adjusted to {num_particles} particles per run and {particles_per_rank} particles per rank")
+        print(f"Adjusted to {num_particles} particles per run and {1} particles per rank")
 
 # Create node-aware communicator
 #node_comm = comm.Split_type(MPI.COMM_TYPE_SHARED, 0)
 
 if rank == 0:
-    print(f"Initialization complete. Starting optimization with {runs} runs and {num_particles} particles per run and {particles_per_rank} particles per rank")
+    print(f"Initialization complete. Starting optimization with {runs} runs and {num_particles} particles per run and {1} particles per rank")
     results = []
 
 if(cost_F.__name__ == "gate_noise_zne_richardson_100k" or cost_F.__name__ == "gate_noise_zne_linear_100k" or cost_F.__name__ == "gate_noise_zne_exponential_100k"):
@@ -73,7 +72,7 @@ for i in range(runs):
     if(rank == 0):
         start_time = perf_counter()
 
-    e = mpi_hopso(cost_F, hp, dimension, maxcut, particles_per_rank, max_iterations, comm, rng)
+    e = mpi_hopso(cost_F, hp, dimension, maxcut, max_iterations, comm, rng)
     comm.Barrier()
     if(rank == 0):
         end_time = perf_counter()

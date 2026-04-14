@@ -40,7 +40,7 @@ def invalid_theta_test(cos_th_i, dead, personal_best_value, theta, rank, iterati
         theta = np.arccos(cos_th_i)
     return theta, dead, personal_best_value
 """
-def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rng=None):
+def mpi_hopso(cost_fn, hp, dimension, max_cut, particles_per_rank, max_iterations=500, comm=None, rng=None):
     """
     Demonstration: each particle updates its attractor/amplitude/theta
     IMMEDIATELY after it finds a better personal best.
@@ -55,7 +55,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
     if rng is None:
         rng = np.random.default_rng()
     # Initialize position and velocity
-    position = rng.uniform(-np.pi, np.pi, size = (dimension))
+    position = rng.uniform(-np.pi, np.pi, size = (particles_per_rank,dimension))
     A_target = np.pi 
     #particle_vels = np.random.uniform(-np.pi/2, np.pi/2, size =  dimension)
     
@@ -63,29 +63,29 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
     # Personal best
     personal_best_position = position.copy()
     if cost_fn.__name__ == "gate_noise_pec_mitiq":
-            personal_best_value = cost_fn(position, False)
+            personal_best_value = np.atleast_1d(cost_fn(position, False))
     else :
-        personal_best_value = cost_fn(position)
+        personal_best_value = np.atleast_1d(cost_fn(position))
 
     # Define rank
     rank = comm.Get_rank()
 
     # Initialize global best for the run
-    all_personal_best_values = np.array(comm.allgather(personal_best_value))
-    all_personal_best_positions = np.stack(comm.allgather(personal_best_position))
+    all_personal_best_values = np.concatenate(comm.allgather(personal_best_value))
+    all_personal_best_positions = np.vstack(comm.allgather(personal_best_position))
 
     # Global best
     global_best_idx = np.argmin(all_personal_best_values)
     global_best_value = all_personal_best_values[global_best_idx]
-    global_best_position = all_personal_best_positions[global_best_idx].copy()
+    global_best_position = all_personal_best_positions[global_best_idx] #.copy()
 
     # Particle time, amplitude, attractor, theta
-    t = np.zeros(dimension)
+    t = np.zeros((particles_per_rank, dimension))
 
     # Compute initial attractor
 
     attractor = attractor_calc(personal_best_position, global_best_position, w1, w2)
-    particle_vel = velocity_for_target_amplitude(position, attractor, A_target, rng, omega=1.0, lamb=lamb)
+    particle_vel = velocity_for_target_amplitude(position, attractor, A_target, rng, omega=1.0, lamb=hp[3])
 
 
     # Initial amplitude
@@ -108,7 +108,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
         # (A) Evolve each particle
         # -------------
         # Evolve time & amplitude
-        delta_t = rng.random(size=(dimension)) * tm
+        delta_t = rng.random(size=(particles_per_rank, dimension)) * tm
         t += delta_t
         A *= np.exp(-lamb * delta_t)
 
@@ -125,9 +125,9 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
         # Evaluate cost
         if cost_fn.__name__ == "gate_noise_pec_mitiq":
             last_iteration = iteration == max_iterations-1
-            current_value = cost_fn(position, last_iteration)
+            current_value = np.atleast_1d(cost_fn(position, last_iteration))
         else :
-            current_value = cost_fn(position)
+            current_value = np.atleast_1d(cost_fn(position))
         #print(current_value,i)
 
         # -------------
@@ -135,37 +135,39 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
         # we IMMEDIATELY recalc attractor/amplitude/theta 
         # for that single particle
         # -------------
+        improved = current_value < personal_best_value
 
-        if current_value < personal_best_value: 
-            personal_best_value = current_value     
-            personal_best_position = wrap_pi(position) # ensure pbest stays in [-π, π]
-            t = np.zeros(dimension) # reset time
+        if np.any(improved): 
+            personal_best_value[improved] = current_value[improved]       
+            personal_best_position[improved] = wrap_pi(position[improved]) # ensure pbest stays in [-π, π]
+            t[improved] = 0  # reset time
             
 
             # Now update attractor dimensionwise for this particle
             new_attractor = attractor_calc(personal_best_position, global_best_position, w1, w2)
-            attractor = new_attractor
+            attractor[improved] = new_attractor[improved]
             
 
             # Recompute amplitude for that particle
-            A1_i = np.sqrt((position - attractor)**2 + (1/omega)**2 * (particle_vel + lamb*(position - attractor))**2)
+            A1_i = np.sqrt((position[improved] - attractor[improved])**2 + (1/omega)**2 * (particle_vel[improved] + lamb*(position[improved] - attractor[improved]))**2)
 
             # also enforce min distance again
-            d_i = circ_dist(personal_best_position, global_best_position)
+            d_i = circ_dist(personal_best_position[improved], global_best_position)
             a_floor_i = (d_i/2.0) * max_cut
-            A = np.maximum(np.maximum(A, A1_i), a_floor_i)
+            A[improved] = np.maximum(np.maximum(A[improved], A1_i), a_floor_i)
 
             # Recompute cos_theta for that particle
-            cos_th_i = np.clip((position - attractor)/A, -1, 1)
-            theta = np.arccos(cos_th_i)
+            cos_th_i = np.clip((position[improved] - attractor[improved])/A[improved], -1, 1)
+            # Kill if invalid
+            theta[improved] = np.arccos(cos_th_i)
 
 
         # -------------
         # (B) After all personal best updates, check global best
         # -------------
         # Gather personal bests from all processes 
-        all_personal_best_values = np.array(comm.allgather(personal_best_value))
-        all_personal_best_positions = np.stack(comm.allgather(personal_best_position))
+        all_personal_best_values = np.concatenate(comm.allgather(personal_best_value))
+        all_personal_best_positions = np.vstack(comm.allgather(personal_best_position))
 
         current_best_idx = np.argmin(all_personal_best_values)
         current_best_val = all_personal_best_values[current_best_idx]
@@ -174,7 +176,7 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
             global_best_value = current_best_val
             global_best_position = all_personal_best_positions[current_best_idx].copy()
             # Reset all times
-            t = np.zeros((dimension))
+            t = np.zeros((particles_per_rank, dimension))
 
             # -------------
             # (B.1) Now do a swarm-wide attractor & amplitude update

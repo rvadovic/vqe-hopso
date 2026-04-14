@@ -2,7 +2,7 @@ from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from numpy import linalg as LA
 from qiskit.circuit.library import TwoLocal
-from qiskit_aer.primitives import EstimatorV2
+from qiskit_aer.primitives import Estimator, EstimatorV2
 from qiskit.circuit import QuantumCircuit,ParameterVector
 from qiskit_aer.noise import NoiseModel, depolarizing_error, pauli_error, ReadoutError
 from qiskit_aer import AerSimulator
@@ -13,6 +13,8 @@ from scipy.optimize import curve_fit
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2, FakeAthensV2, FakeBogotaV2
 from qiskit import transpile
 from qiskit.transpiler import Layout
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 #from tqdm import tqdm
 
 #4-qubit labels
@@ -40,82 +42,67 @@ H_5q = H.tensor(I)
 
 transpiled_ansatz = transpile(ansatz, backend=fake_backend, initial_layout=[0, 1, 2 ,3])
 
-estimator_fakeManilaV2 = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_fakeManilaV2,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 5000
-        }
+estimator_fakeManilaV2 = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeManilaV2
+    },
+    run_options={
+        "shots": 5000
     }
 )
 
-estimator_fakeAthensV2 = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_fakeAthensV2,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 5000
-        }
+estimator_fakeAthensV2 = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeAthensV2
+    },
+    run_options={
+        "shots": 5000
     }
+    
 )
 
-estimator_fakeBogotaV2 = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_fakeBogotaV2,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 5000
-        }
+estimator_fakeBogotaV2 = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeBogotaV2
+    },
+    run_options={
+        "shots": 5000
     }
+    
 )
 
 # Noiseless estimator
-estimator_noiseless = EstimatorV2()
-
-# Shot noise estimators
+estimator_noiseless = Estimator(
+    run_options={
+        "shots": None
+    },
+    approximation=True
+)
 
 noise_model_shots = NoiseModel()
 
-estimator_shot_noise_5k = EstimatorV2(
-    options={
-        "default_precision": 1/np.sqrt(5000),
+estimator_shot_noise_5k = Estimator(
+    run_options={
+        "shots": 5000
     }
 )
 
-estimator_shot_noise_1k = EstimatorV2(
-    options={
-        "default_precision": 1/np.sqrt(1000),
+estimator_shot_noise_1k = Estimator(
+    run_options={
+        "shots": 1000
     }
 )
 
-estimator_shot_noise_100 = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_shots,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 100
-        }
-    }
+estimator_shot_noise_100 = Estimator(
+    run_options={
+        "shots": 100
+    },
+    approximation=False
 )
 
-estimator_shot_noise_100k = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_shots,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 100000
-        }
+estimator_shot_noise_100k = Estimator(
+    run_options={
+        "shots": 100000
     }
 )
 
@@ -134,39 +121,30 @@ noise_model_depolarization.add_all_qubit_quantum_error(error2, ['cx'])
 
 #noise_model_depolarization.add_all_qubit_readout_error(readout) # Not yet
 
-estimator_gate_noise_5k = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_depolarization,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 5000
-        }
+estimator_gate_noise_5k = Estimator(
+    backend_options={
+        "noise_model": noise_model_depolarization
+    },
+    run_options={
+        "shots": 5000
     }
 )
 
-estimator_gate_noise_100k = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_depolarization,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 100000
-        }
+estimator_gate_noise_100k = Estimator(
+    backend_options={
+        "noise_model": noise_model_depolarization
+    },
+    run_options={
+        "shots": 100000
     }
 )
 
-estimator_gate_noise_1k = EstimatorV2(
-    options={
-        "backend_options": {
-            "noise_model": noise_model_depolarization,
-            "method": "automatic"
-        },
-        "run_options": {
-            "shots": 1000
-        }
+estimator_gate_noise_1k = Estimator(
+    backend_options={
+        "noise_model": noise_model_depolarization
+    },
+    run_options={
+        "shots": 1000
     }
 )
 
@@ -214,16 +192,14 @@ def prepare_estimators_zne_5k():
 
         #scaled_noise.add_all_qubit_readout_error(scaled_readout)
 
-        estimator = EstimatorV2(
-            options={
-                "backend_options": {
-                    "noise_model": scaled_noise,
-                    "method": "automatic"
-                },
-                "run_options": {
-                    "shots": 5000
-                }
-            }
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": 5000
+            },
+            
         )
         estimators_zne.append(estimator)
 
@@ -241,16 +217,14 @@ def prepare_estimators_zne_100k():
 
         #scaled_noise.add_all_qubit_readout_error(scaled_readout)
 
-        estimator = EstimatorV2(
-            options={
-                "backend_options": {
-                    "noise_model": scaled_noise,
-                    "method": "automatic"
-                },
-                "run_options": {
-                    "shots": 100000
-                }
-            }
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": 100000
+            },
+            
         )
         estimators_zne.append(estimator)
 
@@ -351,18 +325,12 @@ def gate_noise_zne_exponential_100k(angles):
     return np.array(mitigated)
 
 def execute_5k(circuit):
-    pubs = [(circuit, H)]
-    job = estimator_gate_noise_5k.run(pubs)
-    result = job.result()
-    energy = result[0].data.evs
-    return energy
+    job = estimator_gate_noise_5k.run([circuit], [H])
+    return job.result().values[0]
 
 def execute_100k(circuit):
-    pubs = [(circuit, H)]
-    job = estimator_gate_noise_100k.run(pubs)
-    result = job.result()
-    energy = result[0].data.evs
-    return energy
+    job = estimator_gate_noise_100k.run([circuit], [H])
+    return job.result().values[0]
 
 def mitiq_extrapolate(angles, scale_factors, method, shots):
     if method == 'linear':
@@ -373,19 +341,17 @@ def mitiq_extrapolate(angles, scale_factors, method, shots):
         factory = zne.inference.ExponentialFactory(scale_factors)
 
     extrapolation_method = factory.extrapolate
-    mitigated = []
 
-    for a in angles:
-        circuit = ansatz.assign_parameters(a)
-        folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=scale_factors, scale_method=fold_gates_at_random)
-        if shots == 5000:
-            energies = [execute_5k(c) for c in folded_circuits]
-        elif shots == 100000:
-            energies = [execute_100k(c) for c in folded_circuits]
-        mit = zne.combine_results(scale_factors, energies, extrapolation_method)
-        mitigated.append(mit)
+    circuit = ansatz.assign_parameters(angles)
+    folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=scale_factors, scale_method=fold_gates_at_random)
+    if shots == 5000:
+        energies = [execute_5k(c) for c in folded_circuits]
+    elif shots == 100000:
+        energies = [execute_100k(c) for c in folded_circuits]
 
-    return np.array(mitigated)
+    mitigated = zne.combine_results(scale_factors, energies, extrapolation_method)
+
+    return mitigated
 
 def gate_noise_zne_mitiq_linear_5k(angles):
     return mitiq_extrapolate(angles, scale_factors, method='linear', shots=5000)
@@ -432,89 +398,70 @@ def gate_noise_pec_mitiq_100k(angles, last_iteration):
         return gate_noise_100k(angles)
 
 def noiseless(angles):
+    job = estimator_noiseless.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+""" 
+def noiselessV2(angles):
     bound_circuits = [ansatz.assign_parameters(a) for a in angles]
     pubs = [(c, H) for c in bound_circuits]
-    job = estimator_noiseless.run(pubs)
+    job = noiseless_V2.run(pubs)
     result = job.result() 
     energies = np.array([res.data.evs for res in result])
     return energies
-
+"""
 def shot_noise_5k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_shot_noise_5k.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_shot_noise_5k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def shot_noise_1k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_noiseless.run(pubs, precision=1/np.sqrt(1000))
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_shot_noise_1k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def shot_noise_100k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_shot_noise_100k.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_shot_noise_100k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def shot_noise_100(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_shot_noise_100.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_shot_noise_100.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def gate_noise_5k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_gate_noise_5k.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_gate_noise_5k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def gate_noise_100k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_gate_noise_100k.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_gate_noise_100k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def gate_noise_1k(angles):
-    bound_circuits = [ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H) for c in bound_circuits]
-    job = estimator_gate_noise_1k.run(pubs)
-    result = job.result() 
-    energies = np.array([res.data.evs for res in result])
-    return energies
+    job = estimator_gate_noise_1k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
 
 def fakeManilaV2(angles):
     bound_circuits = [transpiled_ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H_5q) for c in bound_circuits]
-    job = estimator_fakeManilaV2.run(pubs)
+    job = estimator_fakeManilaV2.run(bound_circuits, H_5q)
     result = job.result() 
     energies = np.array([res.data.evs for res in result])
     return energies
 
 def fakeAthensV2(angles):
     bound_circuits = [transpiled_ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H_5q) for c in bound_circuits]
-    job = estimator_fakeAthensV2.run(pubs)
+    job = estimator_fakeAthensV2.run(bound_circuits, H_5q)
     result = job.result() 
     energies = np.array([res.data.evs for res in result])
     return energies
 
 def fakeBogotaV2(angles):
     bound_circuits = [transpiled_ansatz.assign_parameters(a) for a in angles]
-    pubs = [(c, H_5q) for c in bound_circuits]
-    job = estimator_fakeBogotaV2.run(pubs)
+    job = estimator_fakeBogotaV2.run(bound_circuits, H_5q)
     result = job.result() 
     energies = np.array([res.data.evs for res in result])
     return energies
