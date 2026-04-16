@@ -76,6 +76,7 @@ for cf in cost_functions:
     ax = sns.boxplot(data=subset, x='optimizer', y='final_energy', order=optimizers, width=0.2, showfliers=False)
     ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
     ax.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    ax.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
     ax.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
     ax.legend()
     
@@ -104,6 +105,7 @@ for opt in optimizers:
     ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
     ax.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
     ax.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    ax.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
     ax.legend()
 
     plt.title(f"Final Energy Distribution – Optimizer: {opt}")
