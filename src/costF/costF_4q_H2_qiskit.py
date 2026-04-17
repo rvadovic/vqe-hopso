@@ -188,7 +188,8 @@ def calc_probability(prob, factor):
     return min(1.0, prob * factor)
 
 # SCALE FACTORS FOR ZNE
-scale_factors = [1.0, 2.0, 3.0]
+scale_factors_10 = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5]
+scale_factors = [1.0, 2.5, 5.0]
 
 estimators_zne = []
 
@@ -304,6 +305,13 @@ def gate_noise_zne_linear_5k(angles):
         job = est.run([ansatz], [H], [angles])
         raw_energies.append(job.result().values[0])
     # extrapolate
+    
+    for i in range(len(raw_energies)):
+        if i < len(raw_energies) - 1:
+            print(raw_energies[i], end=',')
+        else:
+            print(raw_energies[i])
+    
     return extrapolate(scale_factors, raw_energies, method='linear')
 
 def gate_noise_zne_exponential_5k(angles):

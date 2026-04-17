@@ -63,7 +63,7 @@ def main():
     budget = args.budget
     
     optimizer = mpi_hopso
-    runs = 100
+    runs = 1
     dimension = ansatz_h2.num_parameters
     maxcut = 2.05
     max_iterations = budget/num_particles
@@ -117,12 +117,12 @@ def main():
         if(rank == 0):
             start_time = perf_counter()
 
-        e = mpi_hopso(cost_F, hp, dimension, maxcut, max_iterations, comm, rng)
+        e, best_position = mpi_hopso(cost_F, hp, dimension, maxcut, max_iterations, comm, rng)
         comm.Barrier()
         if(rank == 0):
             end_time = perf_counter()
             time = end_time - start_time
-            results.append({"run": i+1, "final_energy": e, "time": time})
+            results.append({"run": i+1, "final_energy": e, "time": time, "best_position": best_position.tolist()})
 
     if(rank == 0):
         write_to_csv(cost_F.__name__, optimizer.__name__, results)

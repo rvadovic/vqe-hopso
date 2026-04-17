@@ -196,4 +196,5 @@ def mpi_hopso(cost_fn, hp, dimension, max_cut, max_iterations=500, comm=None, rn
         iteration += 1
     
     if(rank == 0):
-        return global_best_value
+        return global_best_value, global_best_position
+    else: return None, None
