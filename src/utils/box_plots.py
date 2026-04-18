@@ -140,20 +140,25 @@ for cf in cost_functions:
 # -------------------------------
 # 2. Box plots: per optimizer (one figure per optimizer)
 # -------------------------------
-"""
 for opt in optimizers:
     subset = combined[combined['optimizer'] == opt]
     if subset.empty:
         continue
+    melted = subset.melt(
+        id_vars=['cost_function'],
+        value_vars=['final_energy', 'real_energy'],
+        var_name='energy_type',
+        value_name='energy'
+    )
 
-    plt.figure(figsize=(10, 6))
+    fig, ax1 = plt.subplots(figsize=(8, 6))
 
-    ax = sns.boxplot(data=subset, x='cost_function', y='final_energy', order=cost_functions, width=0.2, showfliers=False)
-    ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
-    ax.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
-    ax.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
-    ax.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
-    ax.legend()
+    sns.boxplot(data=melted, x='cost_function', y='energy', hue='energy_type', order=cost_functions, width=0.2, showfliers=False, ax=ax1)
+    ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+    ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+    ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    ax1.legend()
 
     plt.title(f"Final Energy Distribution – Optimizer: {opt}")
     plt.ylabel("Energy (Hartree)")
@@ -163,5 +168,5 @@ for opt in optimizers:
     plt.savefig(out_path, dpi=150)
     plt.close()
     print(f"Saved: {out_path}")
-"""
+
 print("All box plots generated.")

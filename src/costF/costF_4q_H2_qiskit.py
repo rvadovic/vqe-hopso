@@ -173,7 +173,7 @@ def extrapolate(scale_factors, energies, method):
     elif method == 'richardson':
         if len(scale_factors) == 3:
             E1, E2, E3 = energies
-            return ((9*E1) - (8*E3) + E2) / (2)
+            return ((3*E1) - (3*E2) + E3)
     elif method == 'exponential':
         try:
             p0 = [1.2, 0.5, E_exact + 1.0]  # Initial guess: a, b, c

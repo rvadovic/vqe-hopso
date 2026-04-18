@@ -65,7 +65,7 @@ def main():
     budget = args.budget
     
     optimizer = mpi_hopso
-    runs = 100
+    runs = 10
     dimension = ansatz_h2.num_parameters
     maxcut = 2.05
     max_iterations = budget/num_particles
