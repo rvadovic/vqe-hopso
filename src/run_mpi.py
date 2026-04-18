@@ -26,6 +26,8 @@ def main():
     args = parser.parse_args()
     cost_F_mapping = {
         "noiseless": noiseless,
+        "shot_noise_100": shot_noise_100,
+        "shot_noise_5k": shot_noise_5k,
         "shot_noise_1k": shot_noise_1k,
         "shot_noise_10k": shot_noise_10k,
         "shot_noise_100k": shot_noise_100k,
@@ -63,7 +65,7 @@ def main():
     budget = args.budget
     
     optimizer = mpi_hopso
-    runs = 1
+    runs = 100
     dimension = ansatz_h2.num_parameters
     maxcut = 2.05
     max_iterations = budget/num_particles

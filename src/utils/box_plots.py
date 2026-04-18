@@ -3,6 +3,11 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from costF.costF_4q_H2_qiskit import E_exact
+from costF.costF_4q_H2_qiskit import noiseless
+import json
+import ast
+import numpy as np
+from io import StringIO
 
 # Configuration
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "results")
@@ -24,6 +29,24 @@ def parse_filename(filename):
     costF = '_'.join(parts[i:])
     return optimizer, costF
 
+def parse_position(val):
+    if isinstance(val, float) and np.isnan(val):
+        return None
+    if isinstance(val, (list, np.ndarray)):
+        return list(val)
+    # Try JSON first (new format), fall back to ast.literal_eval (old format)
+    try:
+        return json.loads(val)
+    except (json.JSONDecodeError, TypeError):
+        return ast.literal_eval(val)
+
+def real_energy(row):
+    angles = parse_position(row['best_position'])
+    if angles == None:
+        return row['final_energy']
+    energy_noiseless = noiseless(angles)
+    return energy_noiseless
+
 # Load all raw data into a single DataFrame
 all_data = []
 for fname in os.listdir(DATA_DIR):
@@ -31,7 +54,9 @@ for fname in os.listdir(DATA_DIR):
         continue
     filepath = os.path.join(DATA_DIR, fname)
     try:
-        df = pd.read_csv(filepath)
+        with open(filepath, 'r') as f:
+                lines = f.readlines()
+        df = pd.read_csv(StringIO(''.join(lines)), sep=';')
     except Exception as e:
         print(f"Warning: could not read {fname} - {e}")
         continue
@@ -52,14 +77,26 @@ for fname in os.listdir(DATA_DIR):
     temp = df[['final_energy']].copy()
     temp['optimizer'] = optimizer
     temp['cost_function'] = costF
-    all_data.append(temp)
+    if 'best_position' not in df.columns:
+        temp['real_energy'] = temp['final_energy']
+    else:
+        c = []
+        c.append(df[['best_position']])
+        comb = pd.concat(c, ignore_index=True)
+        temp['real_energy'] = comb.apply(
+            lambda row: real_energy(row), axis=1
+        )
 
+    all_data.append(temp)
 if not all_data:
     raise RuntimeError("No valid raw data files found.")
 
 combined = pd.concat(all_data, ignore_index=True)
-
-
+'''
+combined['real_energy'] = combined.apply(
+    lambda row: real_energy(row), axis=1
+)
+'''
 optimizers = sorted(combined['optimizer'].unique())
 cost_functions = sorted(combined['cost_function'].unique())
 
@@ -70,15 +107,24 @@ for cf in cost_functions:
     subset = combined[combined['cost_function'] == cf]
     if subset.empty:
         continue
+    melted = subset.melt(
+        id_vars=['optimizer'],
+        value_vars=['final_energy', 'real_energy'],
+        var_name='energy_type',
+        value_name='energy'
+    )
 
-    plt.figure(figsize=(8, 6))
+    fig, ax1 = plt.subplots(figsize=(8, 6))
 
-    ax = sns.boxplot(data=subset, x='optimizer', y='final_energy', order=optimizers, width=0.2, showfliers=False)
-    ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
-    ax.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
-    ax.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
-    ax.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
-    ax.legend()
+    sns.boxplot(data=melted, x='optimizer', y='energy', hue='energy_type', order=optimizers, width=0.2, showfliers=False, ax=ax1)
+    ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+    ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+    ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    ax1.legend()
+
+    #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
+    #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
     
     plt.title(f"Final Energy Distribution – Cost Function: {cf}")
     plt.ylabel("Energy (Hartree)")
@@ -94,6 +140,7 @@ for cf in cost_functions:
 # -------------------------------
 # 2. Box plots: per optimizer (one figure per optimizer)
 # -------------------------------
+"""
 for opt in optimizers:
     subset = combined[combined['optimizer'] == opt]
     if subset.empty:
@@ -116,5 +163,5 @@ for opt in optimizers:
     plt.savefig(out_path, dpi=150)
     plt.close()
     print(f"Saved: {out_path}")
-
+"""
 print("All box plots generated.")
