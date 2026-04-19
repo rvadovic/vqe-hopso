@@ -93,6 +93,13 @@ def better_than_found(row):
     energy_noiseless = noiseless(angles)
     return abs(abs(energy_noiseless) - abs(E_EXACT)) < abs(abs(row['final_energy']) - abs(E_EXACT))
 
+def actual_success(row):
+    angles = parse_position(row['best_position'])
+    if angles == None:
+        return False
+    energy_noiseless = noiseless(angles)
+    return abs(abs(energy_noiseless) - abs(E_EXACT)) <= PRECISION
+
 def analyze():
     all_data = []
     for fname in os.listdir(DATA_DIR):
@@ -103,7 +110,6 @@ def analyze():
             with open(filepath, 'r') as f:
                 lines = f.readlines()
             df = pd.read_csv(StringIO(''.join(lines)), sep=';')
-            print(df)
         except Exception as e:
             print(f"Skipping {fname}: {e}")
             continue
@@ -137,13 +143,18 @@ def analyze():
         lambda row: better_than_found(row), axis=1
     )
 
+    combined['actual_success'] = combined.apply(
+        lambda row: actual_success(row), axis=1
+    )
+
     agg_funcs = {
         'final_energy': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
         'error': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
         'success': 'mean',
         'time': 'median',
         'energy_diff': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
-        'better_than_found': 'mean'
+        'better_than_found': 'mean',
+        'actual_success': 'mean'
     }
     """
     cost_funcs = combined['costF'].unique()

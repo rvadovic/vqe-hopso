@@ -407,6 +407,19 @@ def gate_noise_zne_mitiq_richardson_100k(angles):
 def gate_noise_zne_mitiq_exponential_100k(angles):
     return mitiq_extrapolate(angles, scale_factors, method='exponential', shots=100000)
 
+def gate_noise_pec_mitiq_exact(angles, last_iteration):
+    if last_iteration:
+        mitigated = []
+        for a in angles:
+            # extrapolate
+            circuit = ansatz.assign_parameters(a)
+            reps = represent_operations_in_circuit_with_local_depolarizing_noise(circuit, noise_level=depolarizing_prob2)
+            mit = pec.execute_with_pec(circuit, execute_exact, representations=reps, num_samples=1000)
+            mitigated.append(mit)
+        return np.array(mitigated)
+    else:
+        return gate_noise_5k(angles)
+
 def gate_noise_pec_mitiq_5k(angles, last_iteration):
     if last_iteration:
         mitigated = []
