@@ -249,7 +249,7 @@ def prepare_estimators_zne_100k():
         scaled_error2 = depolarizing_error(calc_probability(depolarizing_prob2, factor), 2)
 
         scaled_noise = NoiseModel()
-        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['r'])
+        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['ry'])
         scaled_noise.add_all_qubit_quantum_error(scaled_error2, ['cx'])
 
         #readout_prob_scaled = calc_probability(readout_prob, factor)
