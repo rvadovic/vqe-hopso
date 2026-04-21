@@ -86,7 +86,7 @@ import src.costF.costF_4q_H2_qiskit as q
 
 def apply_zne(
     angles: np.ndarray,
-    method: str = "linear",
+    method,
     shots: Optional[int] = 5000,
     scale_factors: Optional[List[float]] = None,
 ) -> float:
@@ -109,9 +109,11 @@ def apply_zne(
     Extrapolated energy (float).
     """
     if method == 'linear':
-        zne = q.gate_noise_zne_linear_exact
+        zne = q.gate_noise_zne_linear_5k
     elif method == 'richardson':
-        zne = q.gate_noise_zne_richardson_exact
+        zne = q.gate_noise_zne_richardson_5k
+    elif method == 'exponential':
+        zne = q.gate_noise_zne_exponential_5k
     return zne(angles)
 
 
@@ -388,7 +390,7 @@ def main() -> None:
     # ── Process each run ──────────────────────────────────────────────────
     output_rows = []
     n_skipped = 0
-    q.prepare_estimators_zne_exact()
+    q.prepare_estimators_zne_5k()
     for idx, row in df.iterrows():
         run_id = int(row.get("run", idx + 1))
         position = _parse_position(row["best_position"])

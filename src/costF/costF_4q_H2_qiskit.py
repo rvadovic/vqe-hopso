@@ -162,32 +162,35 @@ estimator_gate_noise_1k = Estimator(
     }
 )
 
-def exp_function(x, a, b, c):
-    return a * np.exp(b * x) - c
+def exp_function(x, a, b):
+    return a * np.exp(b * x)
 
-def extrapolate(scale_factors, energies, method):
+def extrapolate(sf, energies, method):
     # energies shape: (len(scale_factors),) for a single parameter set
     if method == 'linear':
-        coeffs = np.polyfit(scale_factors, energies, 1)
+        coeffs = np.polyfit(sf, energies, 1)
         return coeffs[1]  # intercept at 0
     elif method == 'richardson':
-        if len(scale_factors) == 3:
+        if len(sf) == 3:
             E1, E2, E3 = energies
             return ((3*E1) - (3*E2) + E3)
     elif method == 'exponential':
         try:
-            p0 = [1.2, 0.5, E_exact + 1.0]  # Initial guess: a, b, c
-            popt, _ = curve_fit(exp_function, scale_factors, energies, p0=p0, maxfev=1000)
-            return popt[0] - popt[2]  # a + c at x=0
+            p0 = [-1.46985, 0.923858]  # Initial guess: a, b
+            b0 = np.log(energies[1] / energies[0])   # ratio of adjacent points
+            a0 = energies[0] * np.exp(-b0)
+            popt, _ = curve_fit(exp_function, sf, energies, p0=[a0, b0], maxfev=1000)
+            return popt[0]  # a + c at x=0
         except (RuntimeError, RuntimeWarning):
             print("Exponential fit failed, falling back to linear extrapolation")
-            coeffs = np.polyfit(scale_factors, energies, 1)
+            coeffs = np.polyfit(sf, energies, 1)
             return coeffs[1]  # intercept at 0
         
 def calc_probability(prob, factor):
     return min(1.0, prob * factor)
 
 # SCALE FACTORS FOR ZNE
+scale_factors_20 = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10, 10.5]
 scale_factors_10 = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5]
 scale_factors = [1.0, 2.0, 3.0]
 
@@ -305,13 +308,6 @@ def gate_noise_zne_linear_5k(angles):
         job = est.run([ansatz], [H], [angles])
         raw_energies.append(job.result().values[0])
     # extrapolate
-    
-    for i in range(len(raw_energies)):
-        if i < len(raw_energies) - 1:
-            print(raw_energies[i], end=',')
-        else:
-            print(raw_energies[i])
-    
     return extrapolate(scale_factors, raw_energies, method='linear')
 
 def gate_noise_zne_exponential_5k(angles):
@@ -358,18 +354,18 @@ def execute_100k(circuit):
     job = estimator_gate_noise_100k.run([circuit], [H])
     return job.result().values[0]
 
-def mitiq_extrapolate(angles, scale_factors, method, shots):
+def mitiq_extrapolate(angles, sf, method, shots):
     if method == 'linear':
-        factory = zne.inference.LinearFactory(scale_factors)
+        factory = zne.inference.LinearFactory(sf)
     elif method == 'richardson':
-        factory = zne.inference.RichardsonFactory(scale_factors)
+        factory = zne.inference.RichardsonFactory(sf)
     elif method == 'exponential':
-        factory = zne.inference.ExpFactory(scale_factors, asymptote=0.0)
+        factory = zne.inference.ExpFactory(sf, asymptote=0.0)
 
     extrapolation_method = factory.extrapolate
 
     circuit = ansatz.assign_parameters(angles)
-    folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=scale_factors, scale_method=fold_gates_at_random)
+    folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
     if shots == 5000:
         energies = [execute_5k(c) for c in folded_circuits]
     elif shots == 100000:
@@ -377,7 +373,7 @@ def mitiq_extrapolate(angles, scale_factors, method, shots):
     elif shots == None:
         energies = [execute_exact(c) for c in folded_circuits]
 
-    mitigated = zne.combine_results(scale_factors, energies, extrapolation_method)
+    mitigated = zne.combine_results(sf, energies, extrapolation_method)
     return mitigated
 
 def gate_noise_zne_mitiq_linear_exact(angles):

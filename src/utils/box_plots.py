@@ -16,6 +16,36 @@ PRECISION = 1.59e-3
 E_EXACT = E_exact.real
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+custom_cf = ['gate_noise_1k', 'gate_noise_5k','gate_noise_exact', 'noiseless']
+custom_opt = ['mpi_hopso']
+setting = 'cf'
+
+cost_function_labels = {
+    'noiseless': 'Noiseless',
+    'shot_noise_100': '100',
+    'shot_noise_1k': '1000',
+    'shot_noise_5k': '5000',
+    'shot_noise_10k': '10000',
+    'gate_noise_1k':    '1000',
+    'gate_noise_5k':    '5000',
+    'gate_noise_exact': 'No shot noise'
+    # ... add all your cost functions
+}
+
+# Mappings for optimizers
+optimizer_labels = {
+    'mpi_hopso': 'MPI HOPSO',
+    'opt2': 'Optimizer 2',
+    'opt3': 'Optimizer 3',
+    # ... add all your optimizers
+}
+
+# Mappings for energy types
+energy_type_labels = {
+    'final_energy': 'Reported Energy',
+    'real_energy': 'Actual Energy',
+}
+
 def parse_filename(filename):
     base = filename.replace('.csv', '')
     parts = base.split('_')
@@ -69,6 +99,12 @@ for fname in os.listdir(DATA_DIR):
     # Parse configuration from filename
     try:
         optimizer, costF = parse_filename(fname)
+        if setting == 'cf':
+            if costF not in custom_cf:
+                continue
+        elif setting == 'opt':
+            if optimizer not in custom_opt:
+                continue
     except:
         print(f"Warning: could not parse {fname} – skipping")
         continue
@@ -88,6 +124,7 @@ for fname in os.listdir(DATA_DIR):
         )
 
     all_data.append(temp)
+
 if not all_data:
     raise RuntimeError("No valid raw data files found.")
 
@@ -103,70 +140,127 @@ cost_functions = sorted(combined['cost_function'].unique())
 # -------------------------------
 # 1. Box plots: per cost function (one figure per cost function)
 # -------------------------------
-for cf in cost_functions:
-    subset = combined[combined['cost_function'] == cf]
-    if subset.empty:
-        continue
-    melted = subset.melt(
-        id_vars=['optimizer'],
-        value_vars=['final_energy', 'real_energy'],
-        var_name='energy_type',
-        value_name='energy'
-    )
 
-    fig, ax1 = plt.subplots(figsize=(8, 6))
+def per_cf():
+    for cf in cost_functions:
+        subset = combined[combined['cost_function'] == cf]
+        if subset.empty:
+            continue
+        melted = subset.melt(
+            id_vars=['optimizer'],
+            value_vars=['final_energy', 'real_energy'],
+            var_name='energy_type',
+            value_name='energy'
+        )
 
-    sns.boxplot(data=melted, x='optimizer', y='energy', hue='energy_type', order=optimizers, width=0.2, showfliers=False, ax=ax1)
-    ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
-    ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
-    ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
-    ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
-    ax1.legend()
+        fig, ax1 = plt.subplots(figsize=(8, 6))
 
-    #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
-    #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
-    
-    plt.title(f"Final Energy Distribution – Cost Function: {cf}")
-    plt.ylabel("Energy (Hartree)")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    # Sanitize filename
-    safe_cf = cf.replace('/', '_').replace(' ', '_')
-    out_path = os.path.join(OUTPUT_DIR, f"boxplot_costfunc_{safe_cf}.png")
-    plt.savefig(out_path, dpi=150)
-    plt.close()
-    print(f"Saved: {out_path}")
+        sns.boxplot(data=melted, x='optimizer', y='energy', hue='energy_type', order=optimizers, width=0.2, showfliers=False, ax=ax1)
+        ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+        ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+        ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+        ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+        ax1.legend()
+
+        #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
+        #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+        
+        plt.title(f"Final Energy Distribution – Cost Function: {cf}")
+        plt.ylabel("Energy (Hartree)")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        # Sanitize filename
+        safe_cf = cf.replace('/', '_').replace(' ', '_')
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_costfunc_{safe_cf}.png")
+        plt.savefig(out_path, dpi=150)
+        plt.close()
+        print(f"Saved: {out_path}")
 
 # -------------------------------
 # 2. Box plots: per optimizer (one figure per optimizer)
 # -------------------------------
-for opt in optimizers:
-    subset = combined[combined['optimizer'] == opt]
-    if subset.empty:
-        continue
-    melted = subset.melt(
-        id_vars=['cost_function'],
-        value_vars=['final_energy', 'real_energy'],
-        var_name='energy_type',
-        value_name='energy'
-    )
+def per_optimizer():
+    for opt in optimizers:
+        subset = combined[combined['optimizer'] == opt]
+        if subset.empty:
+            continue
+        melted = subset.melt(
+            id_vars=['cost_function'],
+            value_vars=['final_energy', 'real_energy'],
+            var_name='energy_type',
+            value_name='energy'
+        )
 
-    fig, ax1 = plt.subplots(figsize=(8, 6))
+        fig, ax1 = plt.subplots(figsize=(8, 6))
 
-    sns.boxplot(data=melted, x='cost_function', y='energy', hue='energy_type', order=cost_functions, width=0.2, showfliers=False, ax=ax1)
-    ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
-    ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
-    ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
-    ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
-    ax1.legend()
+        sns.boxplot(data=melted, x='cost_function', y='energy', hue='energy_type', order=cost_functions, width=0.2, showfliers=False, ax=ax1)
+        ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+        ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+        ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+        ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+        ax1.legend()
 
-    plt.title(f"Final Energy Distribution – Optimizer: {opt}")
-    plt.ylabel("Energy (Hartree)")
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    out_path = os.path.join(OUTPUT_DIR, f"boxplot_optimizer_{opt}.png")
-    plt.savefig(out_path, dpi=150)
-    plt.close()
-    print(f"Saved: {out_path}")
+        plt.title(f"Final Energy Distribution – Optimizer: {opt}")
+        plt.ylabel("Energy (Hartree)")
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_optimizer_{opt}.png")
+        plt.savefig(out_path, dpi=150)
+        plt.close()
+        print(f"Saved: {out_path}")
 
+def custom(setting):
+    if(setting == 'cf'):
+        custom = custom_opt
+        attr = 'optimizer'
+        x = 'cost_function'
+        x_label_map = cost_function_labels
+        order = custom_cf
+    else:
+        custom = custom_cf
+        attr = 'cost_function'
+        x = 'optimizer'
+        x_label_map = optimizer_labels
+        order = custom_opt
+    for i in custom:
+        subset = combined[combined[attr] == i]
+
+        melted = subset.melt(
+            id_vars=[x],
+            value_vars=['real_energy'],
+            var_name='energy_type',
+            value_name='energy'
+        )
+
+        melted[x] = melted[x].map(x_label_map)
+        melted['energy_type'] = melted['energy_type'].map(energy_type_labels)
+
+        fig, ax1 = plt.subplots(figsize=(8, 6))
+
+        labeled_order = [x_label_map[raw] for raw in order]
+        
+        color_dict = {'Reported Energy': 'steelblue', 'Actual Energy': 'darkorange'}
+        sns.boxplot(data=melted, x=x, y='energy', hue='energy_type', order=labeled_order, width=0.2, showfliers=False, ax=ax1, palette=color_dict)
+        ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+        ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+        ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+        ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+        ax1.legend()
+
+        #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
+        #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+
+        plt.title(f"Gate noise with shot noise")
+        plt.ylabel("Energy (Hartree)")
+        plt.xlabel("Shots")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        # Sanitize filename
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_gate_noise_only_actuaL.png")
+        plt.savefig(out_path, dpi=150)
+        plt.close()
+        print(f"Saved: {out_path}")
+
+
+custom(setting)
 print("All box plots generated.")

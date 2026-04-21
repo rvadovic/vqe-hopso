@@ -13,6 +13,12 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "summaries")
 PRECISION = 1.59e-3
 E_EXACT = E_exact.real
 
+def write_energies_csv(name, energies):
+    out_path = os.path.join(DATA_DIR, f'{name}.csv')
+    with open(out_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(energies)
+
 def write_to_csv(costF_name, optimzer_name, results):
     out_path = os.path.join(DATA_DIR, f'{optimzer_name}_{costF_name}.csv')
     serialised = []
