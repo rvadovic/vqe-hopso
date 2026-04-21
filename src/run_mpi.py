@@ -3,12 +3,13 @@ import numpy as np
 
 #from costF.costF_2q_IvaH2_qiskit import cost_function_1 as cost_fn_h2
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
-from src.costF.costF_4q_H2_qiskit import noiseless, prepare_estimators_zne_exact, shot_noise_1k, shot_noise_10k, fakeManilaV2, fakeAthensV2, fakeBogotaV2, gate_noise_1k, shot_noise_5k, shot_noise_100, prepare_estimators_zne_100k, gate_noise_5k, gate_noise_zne_richardson_5k, prepare_estimators_zne_5k, shot_noise_5k, gate_noise_zne_mitiq_linear_5k, gate_noise_zne_mitiq_richardson_5k, gate_noise_zne_mitiq_exponential_5k, gate_noise_pec_mitiq_5k, gate_noise_zne_linear_5k, gate_noise_zne_exponential_5k, gate_noise_pec_mitiq_100k, gate_noise_zne_linear_100k, gate_noise_zne_mitiq_linear_100k, gate_noise_zne_mitiq_richardson_100k, gate_noise_zne_mitiq_exponential_100k, gate_noise_zne_richardson_100k, gate_noise_100k, shot_noise_100k, gate_noise_exact, gate_noise_zne_linear_exact, gate_noise_zne_richardson_exact, gate_noise_zne_exponential_exact, gate_noise_zne_mitiq_exponential_exact, gate_noise_zne_mitiq_linear_exact, gate_noise_zne_mitiq_richardson_exact
+from src.costF.costF_4q_H2_qiskit import noiseless, prepare_estimators_zne_exact, shot_noise_1k, shot_noise_10k, fakeManilaV2, fakeAthensV2, fakeBogotaV2, gate_noise_1k, shot_noise_5k, shot_noise_100, prepare_estimators_zne_100k, gate_noise_5k, gate_noise_zne_richardson_5k, prepare_estimators_zne_5k, shot_noise_5k, gate_noise_zne_mitiq_linear_5k, gate_noise_zne_mitiq_richardson_5k, gate_noise_zne_mitiq_exponential_5k, gate_noise_pec_mitiq_5k, gate_noise_zne_linear_5k, gate_noise_zne_exponential_5k, gate_noise_pec_mitiq_10k, gate_noise_zne_linear_100k, gate_noise_zne_mitiq_linear_100k, gate_noise_zne_mitiq_richardson_100k, gate_noise_zne_mitiq_exponential_100k, gate_noise_zne_richardson_100k, gate_noise_10k, shot_noise_100k, gate_noise_exact, gate_noise_zne_linear_exact, gate_noise_zne_richardson_exact, gate_noise_zne_exponential_exact, gate_noise_zne_mitiq_exponential_exact, gate_noise_zne_mitiq_linear_exact, gate_noise_zne_mitiq_richardson_exact
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_lih
 from src.optimizers.hopso_final_mpi import mpi_hopso
+from src.optimizers.pso_mpi import mpi_pso
 #from src.optimizers.pso_mpi import pso_mpi
 from src.utils.result_handler_csv import write_to_csv
 from time import perf_counter
@@ -36,7 +37,7 @@ def main():
         "fakeBogotaV2": fakeBogotaV2,
         "gate_noise_1k": gate_noise_1k,
         "gate_noise_5k": gate_noise_5k,
-        "gate_noise_100k": gate_noise_100k,
+        "gate_noise_10k": gate_noise_10k,
         "gate_noise_exact": gate_noise_exact,
         "gate_noise_zne_linear_exact": gate_noise_zne_linear_exact,
         "gate_noise_zne_richardson_exact": gate_noise_zne_richardson_exact,
@@ -64,12 +65,13 @@ def main():
     SCALING_FACTOR = 35
     budget = args.budget
     
-    optimizer = mpi_hopso
+    optimizer = mpi_pso
     runs = 100
     dimension = ansatz_h2.num_parameters
     maxcut = 2.05
     max_iterations = budget/num_particles
-    hp = [1, 1, 2*np.pi, SCALING_FACTOR/max_iterations]
+    hp_hopso = [1, 1, 2*np.pi, SCALING_FACTOR/max_iterations]
+    hp_pso = [0.7298, 2.05, 2.05]
 
 
     # Initialize MPI
@@ -119,7 +121,8 @@ def main():
         if(rank == 0):
             start_time = perf_counter()
 
-        e, best_position = mpi_hopso(cost_F, hp, dimension, maxcut, max_iterations, comm, rng)
+        #e, best_position = mpi_hopso(cost_F, hp_hopso, dimension, maxcut, max_iterations, comm, rng)
+        e, best_position = mpi_pso(cost_F, hp_pso, dimension, max_iterations, rng)
         comm.Barrier()
         if(rank == 0):
             end_time = perf_counter()

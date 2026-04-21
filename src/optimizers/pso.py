@@ -37,4 +37,4 @@ def pso(cost_fn, dimension):
         global_best_position = personal_best_positions[global_best_index]
         iteration += 1
 
-    return global_best_value
+    return global_best_value, global_best_position

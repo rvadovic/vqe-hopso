@@ -144,12 +144,12 @@ estimator_gate_noise_5k = Estimator(
     }
 )
 
-estimator_gate_noise_100k = Estimator(
+estimator_gate_noise_10k = Estimator(
     backend_options={
         "noise_model": noise_model_depolarization
     },
     run_options={
-        "shots": 100000
+        "shots": 10000
     }
 )
 
@@ -350,8 +350,8 @@ def execute_5k(circuit):
     job = estimator_gate_noise_5k.run([circuit], [H])
     return job.result().values[0]
 
-def execute_100k(circuit):
-    job = estimator_gate_noise_100k.run([circuit], [H])
+def execute_10k(circuit):
+    job = estimator_gate_noise_10k.run([circuit], [H])
     return job.result().values[0]
 
 def mitiq_extrapolate(angles, sf, method, shots):
@@ -368,8 +368,8 @@ def mitiq_extrapolate(angles, sf, method, shots):
     folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
     if shots == 5000:
         energies = [execute_5k(c) for c in folded_circuits]
-    elif shots == 100000:
-        energies = [execute_100k(c) for c in folded_circuits]
+    elif shots == 10000:
+        energies = [execute_10k(c) for c in folded_circuits]
     elif shots == None:
         energies = [execute_exact(c) for c in folded_circuits]
 
@@ -429,18 +429,18 @@ def gate_noise_pec_mitiq_5k(angles, last_iteration):
     else:
         return gate_noise_5k(angles)
 
-def gate_noise_pec_mitiq_100k(angles, last_iteration):
+def gate_noise_pec_mitiq_10k(angles, last_iteration):
     if last_iteration:
         mitigated = []
         for a in angles:
             # extrapolate
             circuit = ansatz.assign_parameters(a)
             reps = represent_operations_in_circuit_with_local_depolarizing_noise(circuit, noise_level=depolarizing_prob2)
-            mit = pec.execute_with_pec(circuit, execute_100k, representations=reps, num_samples=1000)
+            mit = pec.execute_with_pec(circuit, execute_10k, representations=reps, num_samples=1000)
             mitigated.append(mit)
         return np.array(mitigated)
     else:
-        return gate_noise_100k(angles)
+        return gate_noise_10k(angles)
 
 def noiseless(angles):
     job = estimator_noiseless.run([ansatz], [H], [angles])
@@ -482,8 +482,8 @@ def gate_noise_5k(angles):
     energy = job.result().values[0]
     return energy
 
-def gate_noise_100k(angles):
-    job = estimator_gate_noise_100k.run([ansatz], [H], [angles])
+def gate_noise_10k(angles):
+    job = estimator_gate_noise_10k.run([ansatz], [H], [angles])
     energy = job.result().values[0]
     return energy
 

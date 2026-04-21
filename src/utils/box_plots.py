@@ -16,7 +16,7 @@ PRECISION = 1.59e-3
 E_EXACT = E_exact.real
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-custom_cf = ['gate_noise_1k', 'gate_noise_5k','gate_noise_exact', 'noiseless']
+custom_cf = ['shot_noise_5k', 'shot_noise_10k', 'noiseless']
 custom_opt = ['mpi_hopso']
 setting = 'cf'
 
@@ -28,7 +28,8 @@ cost_function_labels = {
     'shot_noise_10k': '10000',
     'gate_noise_1k':    '1000',
     'gate_noise_5k':    '5000',
-    'gate_noise_exact': 'No shot noise'
+    'gate_noise_exact': 'No shot noise',
+    'gate_noise_10k': '10000'
     # ... add all your cost functions
 }
 
@@ -227,7 +228,7 @@ def custom(setting):
 
         melted = subset.melt(
             id_vars=[x],
-            value_vars=['real_energy'],
+            value_vars=['final_energy', 'real_energy'],
             var_name='energy_type',
             value_name='energy'
         )
@@ -250,13 +251,13 @@ def custom(setting):
         #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
         #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
 
-        plt.title(f"Gate noise with shot noise")
+        plt.title(f"Shot noise (5000, 10000, Noiseless)")
         plt.ylabel("Energy (Hartree)")
         plt.xlabel("Shots")
         plt.xticks(rotation=45)
         plt.tight_layout()
         # Sanitize filename
-        out_path = os.path.join(OUTPUT_DIR, f"boxplot_gate_noise_only_actuaL.png")
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_shot_noise_closeup.png")
         plt.savefig(out_path, dpi=150)
         plt.close()
         print(f"Saved: {out_path}")
