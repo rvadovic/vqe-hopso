@@ -5,7 +5,7 @@ from mpi4py import MPI
 def wrap_pi(x):
     return (x + np.pi) % (2*np.pi) - np.pi
 
-def mpi_pso(cost_fn, hp, dimension, max_iterations=500, comm=None, rng=None):
+def mpi_pso(cost_fn, hp, dimension, rng, max_iterations=500, comm=None):
     # Unpack hyperparameters
     chi, c1, c2 = hp
 
@@ -56,3 +56,5 @@ def mpi_pso(cost_fn, hp, dimension, max_iterations=500, comm=None, rng=None):
     
     if(rank == 0):
         return global_best_value, global_best_position
+    else:
+        return None, None

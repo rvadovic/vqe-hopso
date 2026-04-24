@@ -31,16 +31,20 @@ E_exact = np.min(eigvals[0])
 ansatz = TwoLocal(4, ["ry"],"cx", reps=3, entanglement="linear",insert_barriers=True).decompose()
 
 # Fake backends
-fake_backend = FakeBogotaV2()
+fake_bogota = FakeBogotaV2()
+fake_athens = FakeAthensV2()
+fake_manila = FakeManilaV2()
 
-noise_model_fakeManilaV2 = NoiseModel.from_backend(fake_backend)
-noise_model_fakeAthensV2 = NoiseModel.from_backend(fake_backend)
-noise_model_fakeBogotaV2 = NoiseModel.from_backend(fake_backend)
+noise_model_fakeManilaV2 = NoiseModel.from_backend(fake_manila)
+noise_model_fakeAthensV2 = NoiseModel.from_backend(fake_athens)
+noise_model_fakeBogotaV2 = NoiseModel.from_backend(fake_bogota)
 
 I = SparsePauliOp(["I"], coeffs=[1.0])
 H_5q = H.tensor(I)
 
-transpiled_ansatz = transpile(ansatz, backend=fake_backend, initial_layout=[0, 1, 2 ,3])
+transpiled_ansatz_bogota = transpile(ansatz, backend=fake_bogota, initial_layout=[0, 1, 2 ,3])
+transpiled_ansatz_athens = transpile(ansatz, backend=fake_athens, initial_layout=[0, 1, 2 ,3])
+transpiled_ansatz_manila = transpile(ansatz, backend=fake_manila, initial_layout=[0, 1, 2 ,3])
 
 estimator_fakeManilaV2 = Estimator(
     backend_options={
@@ -68,6 +72,38 @@ estimator_fakeBogotaV2 = Estimator(
     run_options={
         "shots": 5000
     }
+    
+)
+
+estimator_fakeManilaV2_exact = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeManilaV2
+    },
+    run_options={
+        "shots": None
+    },
+    approximation=True
+)
+
+estimator_fakeAthensV2_exact = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeAthensV2
+    },
+    run_options={
+        "shots": None
+    },
+    approximation=True
+    
+)
+
+estimator_fakeBogotaV2_exact = Estimator(
+    backend_options={
+        "noise_model": noise_model_fakeBogotaV2
+    },
+    run_options={
+        "shots": None
+    },
+    approximation=True
     
 )
 
@@ -197,6 +233,7 @@ scale_factors = [1.0, 2.0, 3.0]
 estimators_zne = []
 
 def prepare_estimators_zne_exact():
+    estimators_zne.clear()
     for factor in scale_factors:
         scaled_error1 = depolarizing_error(calc_probability(depolarizing_prob1, factor), 1)
         scaled_error2 = depolarizing_error(calc_probability(depolarizing_prob2, factor), 2)
@@ -223,6 +260,7 @@ def prepare_estimators_zne_exact():
         estimators_zne.append(estimator)
 
 def prepare_estimators_zne_5k():
+    estimators_zne.clear()
     for factor in scale_factors:
         scaled_error1 = depolarizing_error(calc_probability(depolarizing_prob1, factor), 1)
         scaled_error2 = depolarizing_error(calc_probability(depolarizing_prob2, factor), 2)
@@ -284,6 +322,9 @@ def gate_noise_zne_linear_exact(angles):
         job = est.run([ansatz], [H], [angles])
         raw_energies.append(job.result().values[0])
     # extrapolate
+    if len(raw_energies) != len(scale_factors):
+        print(f"Warning: {raw_energies} and {scale_factors} length mismatch")
+        
     return extrapolate(scale_factors, raw_energies, method='linear')
 
 def gate_noise_zne_exponential_exact(angles):
@@ -492,22 +533,32 @@ def gate_noise_1k(angles):
     energy = job.result().values[0]
     return energy
 
-def fakeManilaV2(angles):
-    job = estimator_fakeManilaV2.run([transpiled_ansatz], [H], [angles])
+def fakeManilaV2_5k(angles):
+    job = estimator_fakeManilaV2.run([transpiled_ansatz_manila], [H_5q], [angles])
     energy = job.result().values[0]
     return energy
 
-def fakeAthensV2(angles):
-    job = estimator_fakeManilaV2.run([transpiled_ansatz], [H], [angles])
+def fakeAthensV2_5k(angles):
+    job = estimator_fakeAthensV2.run([transpiled_ansatz_athens], [H_5q], [angles])
     energy = job.result().values[0]
     return energy
 
-def fakeAthensV2(angles):
-    job = estimator_fakeAthensV2.run([transpiled_ansatz], [H], [angles])
+def fakeBogotaV2_5k(angles):
+    job = estimator_fakeBogotaV2.run([transpiled_ansatz_bogota], [H_5q], [angles])
     energy = job.result().values[0]
     return energy
 
-def fakeBogotaV2(angles):
-    job = estimator_fakeBogotaV2.run([transpiled_ansatz], [H], [angles])
+def fakeManilaV2_exact(angles):
+    job = estimator_fakeManilaV2_exact.run([transpiled_ansatz_manila], [H_5q], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def fakeAthensV2_exact(angles):
+    job = estimator_fakeAthensV2_exact.run([transpiled_ansatz_athens], [H_5q], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def fakeBogotaV2_exact(angles):
+    job = estimator_fakeBogotaV2_exact.run([transpiled_ansatz_bogota], [H_5q], [angles])
     energy = job.result().values[0]
     return energy

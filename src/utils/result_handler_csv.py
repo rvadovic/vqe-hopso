@@ -52,24 +52,25 @@ def parse_filename(filename):
 def rename_cols(agg_df, prefix=''):
     agg_df.columns = ['_'.join(col).strip() for col in agg_df.columns.values]
     agg_df = agg_df.rename(columns={
-        'final_energy_mean': 'energy_mean',
-        'final_energy_median': 'energy_median',
-        'final_energy_min': 'energy_min',
-        'final_energy_max': 'energy_max',
-        'final_energy_<lambda_0>': 'energy_q25',
-        'final_energy_<lambda_1>': 'energy_q75',
-        'error_mean': 'error_mean',
-        'error_median': 'error_median',
-        'error_min': 'error_min',
-        'error_max': 'error_max',
-        'error_<lambda_0>': 'error_q25',
-        'error_<lambda_1>': 'error_q75',
-        'success_mean': 'success_rate',
+        'final_energy_mean': 'reported_energy_mean',
+        'final_energy_median': 'reported_energy_median',
+        'final_energy_min': 'reported_energy_min',
+        'final_energy_max': 'reported_energy_max',
+        'final_energy_<lambda_0>': 'reported_energy_q25',
+        'final_energy_<lambda_1>': 'reported_energy_q75',
+        'reported_error_mean': 'error_mean',
+        'reported_error_median': 'error_median',
+        'reported_error_min': 'error_min',
+        'reported_error_max': 'error_max',
+        'reported_error_<lambda_0>': 'error_q25',
+        'reported_error_<lambda_1>': 'error_q75',
+        'reported_success_mean': 'reported_success_rate',
         'energy_diff_median': 'energy_diff_median',
         'energy_diff_min': 'energy_diff_min',
         'energy_diff_max': 'energy_diff_max',
         'energy_diff_<lambda_0>': 'energy_diff_q25',
-        'energy_diff_<lambda_1>': 'energy_diff_q75'
+        'energy_diff_<lambda_1>': 'energy_diff_q75',
+        'actual_success_mean': 'actual_success_rate'
     })
     if prefix:
         agg_df = agg_df.add_prefix(prefix)
@@ -106,6 +107,12 @@ def actual_success(row):
     energy_noiseless = noiseless(angles)
     return abs(abs(energy_noiseless) - abs(E_EXACT)) <= PRECISION
 
+def actual_energy(row):
+    angles = parse_position(row['best_position'])
+    if angles == None:
+        return False
+    return noiseless(angles)
+
 def analyze():
     all_data = []
     for fname in os.listdir(DATA_DIR):
@@ -138,29 +145,32 @@ def analyze():
 
     combined = pd.concat(all_data, ignore_index=True)
 
-    combined['error'] = abs(abs(combined['final_energy']) - abs(E_EXACT))
-    combined['success'] = combined['error'] <= PRECISION
+    combined['reported_error'] = abs(abs(combined['final_energy']) - abs(E_EXACT))
+    combined['reported_success'] = combined['reported_error'] <= PRECISION
 
     combined['energy_diff'] = combined.apply( 
         lambda row: energy_diff(row), axis=1
-    )
-
-    combined['better_than_found'] = combined.apply(
-        lambda row: better_than_found(row), axis=1
     )
 
     combined['actual_success'] = combined.apply(
         lambda row: actual_success(row), axis=1
     )
 
+    combined['actual_energy'] = combined.apply(
+        lambda row: actual_energy(row), axis=1
+    )
+
+    combined['actual_error'] = abs(abs(combined['actual_energy']) - abs(E_EXACT))
+
     agg_funcs = {
         'final_energy': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
-        'error': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
-        'success': 'mean',
+        'reported_error': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
+        'reported_success': 'mean',
         'time': 'median',
         'energy_diff': ['mean', 'median', 'min', 'max', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)],
-        'better_than_found': 'mean',
-        'actual_success': 'mean'
+        'actual_success': 'mean',
+        'actual_energy': 'median',
+        'actual_error': 'median'
     }
     """
     cost_funcs = combined['costF'].unique()

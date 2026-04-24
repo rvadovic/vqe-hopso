@@ -2,13 +2,15 @@ import numpy as np
 
 # Configuration
 hp = [0.7298, 2.05, 2.05] #Chi, c1, c2
-num_particles = 12
 max_iterations = 500
 
-def pso(cost_fn, dimension):
+def pso(cost_fn, dimension, budget, seed):
 
-    particles_position = np.random.uniform(-np.pi, np.pi, size=(num_particles, dimension))
-    particles_velocity = np.random.uniform(-np.pi, np.pi, size=(num_particles, dimension))
+    num_particles = budget // max_iterations
+
+    rng = np.random.default_rng(seed)
+    particles_position = rng.uniform(-np.pi, np.pi, size=(num_particles, dimension))
+    particles_velocity = rng.uniform(-np.pi, np.pi, size=(num_particles, dimension))
 
     personal_best_positions = particles_position.copy()
     personal_best_values = np.array([cost_fn(p) for p in personal_best_positions])
@@ -19,7 +21,7 @@ def pso(cost_fn, dimension):
 
     iteration = 0
     while iteration < max_iterations:
-        r1, r2 = np.random.rand(num_particles, dimension), np.random.rand(num_particles, dimension)
+        r1, r2 = rng.random(size=(num_particles, dimension)), rng.random(size=(num_particles, dimension))
         particles_velocity = hp[0] * (particles_velocity + hp[1] * r1 * (personal_best_positions - particles_position) + hp[2] * r2 * (global_best_position - particles_position))
         particles_position = (particles_position + particles_velocity)  # Update positions
 

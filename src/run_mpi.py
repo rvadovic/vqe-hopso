@@ -3,7 +3,46 @@ import numpy as np
 
 #from costF.costF_2q_IvaH2_qiskit import cost_function_1 as cost_fn_h2
 #from costF.costF_2q_IvaH2_qiskit import ansatz as ansatz_h2
-from src.costF.costF_4q_H2_qiskit import noiseless, prepare_estimators_zne_exact, shot_noise_1k, shot_noise_10k, fakeManilaV2, fakeAthensV2, fakeBogotaV2, gate_noise_1k, shot_noise_5k, shot_noise_100, prepare_estimators_zne_100k, gate_noise_5k, gate_noise_zne_richardson_5k, prepare_estimators_zne_5k, shot_noise_5k, gate_noise_zne_mitiq_linear_5k, gate_noise_zne_mitiq_richardson_5k, gate_noise_zne_mitiq_exponential_5k, gate_noise_pec_mitiq_5k, gate_noise_zne_linear_5k, gate_noise_zne_exponential_5k, gate_noise_pec_mitiq_10k, gate_noise_zne_linear_100k, gate_noise_zne_mitiq_linear_100k, gate_noise_zne_mitiq_richardson_100k, gate_noise_zne_mitiq_exponential_100k, gate_noise_zne_richardson_100k, gate_noise_10k, shot_noise_100k, gate_noise_exact, gate_noise_zne_linear_exact, gate_noise_zne_richardson_exact, gate_noise_zne_exponential_exact, gate_noise_zne_mitiq_exponential_exact, gate_noise_zne_mitiq_linear_exact, gate_noise_zne_mitiq_richardson_exact
+from src.costF.costF_4q_H2_qiskit import (noiseless,
+        prepare_estimators_zne_exact, 
+        shot_noise_1k, 
+        shot_noise_10k, 
+        fakeManilaV2_5k, 
+        fakeAthensV2_5k, 
+        fakeBogotaV2_5k, 
+        fakeManilaV2_exact,
+        fakeAthensV2_exact,
+        fakeBogotaV2_exact,
+        gate_noise_1k, 
+        shot_noise_5k, 
+        shot_noise_100, 
+        prepare_estimators_zne_100k, 
+        gate_noise_5k, 
+        gate_noise_zne_richardson_5k, 
+        prepare_estimators_zne_5k, 
+        shot_noise_5k, 
+        gate_noise_zne_mitiq_linear_5k, 
+        gate_noise_zne_mitiq_richardson_5k, 
+        gate_noise_zne_mitiq_exponential_5k, 
+        gate_noise_pec_mitiq_5k, 
+        gate_noise_zne_linear_5k, 
+        gate_noise_zne_exponential_5k, 
+        gate_noise_pec_mitiq_10k, 
+        gate_noise_zne_linear_100k, 
+        gate_noise_zne_mitiq_linear_100k, 
+        gate_noise_zne_mitiq_richardson_100k, 
+        gate_noise_zne_mitiq_exponential_100k, 
+        gate_noise_zne_richardson_100k, 
+        gate_noise_10k, shot_noise_100k, 
+        gate_noise_exact, 
+        gate_noise_zne_linear_exact, 
+        gate_noise_zne_richardson_exact, 
+        gate_noise_zne_exponential_exact, 
+        gate_noise_zne_mitiq_exponential_exact, 
+        gate_noise_zne_mitiq_linear_exact, 
+        gate_noise_zne_mitiq_richardson_exact,
+        )
+
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
 #from costF.costF_8q_LiH import cost_fn_8qlih
@@ -32,9 +71,12 @@ def main():
         "shot_noise_1k": shot_noise_1k,
         "shot_noise_10k": shot_noise_10k,
         "shot_noise_100k": shot_noise_100k,
-        "fakeManilaV2": fakeManilaV2,
-        "fakeAthensV2": fakeAthensV2,
-        "fakeBogotaV2": fakeBogotaV2,
+        "fakeManilaV2_5k": fakeManilaV2_5k,
+        "fakeAthensV2_5k": fakeAthensV2_5k,
+        "fakeBogotaV2_5k": fakeBogotaV2_5k,
+        "fakeManilaV2_exact": fakeManilaV2_exact,
+        "fakeAthensV2_exact": fakeAthensV2_exact,
+        "fakeBogotaV2_exact": fakeBogotaV2_exact,
         "gate_noise_1k": gate_noise_1k,
         "gate_noise_5k": gate_noise_5k,
         "gate_noise_10k": gate_noise_10k,
@@ -65,7 +107,7 @@ def main():
     SCALING_FACTOR = 35
     budget = args.budget
     
-    optimizer = mpi_pso
+    optimizer = mpi_hopso
     runs = 100
     dimension = ansatz_h2.num_parameters
     maxcut = 2.05
@@ -121,8 +163,8 @@ def main():
         if(rank == 0):
             start_time = perf_counter()
 
-        #e, best_position = mpi_hopso(cost_F, hp_hopso, dimension, maxcut, max_iterations, comm, rng)
-        e, best_position = mpi_pso(cost_F, hp_pso, dimension, max_iterations, rng)
+        e, best_position = mpi_hopso(cost_F, hp_hopso, dimension, maxcut, max_iterations, comm, rng)
+        #e, best_position = mpi_pso(cost_F, hp_pso, dimension, rng,  max_iterations, comm)
         comm.Barrier()
         if(rank == 0):
             end_time = perf_counter()

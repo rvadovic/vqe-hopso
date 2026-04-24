@@ -16,9 +16,10 @@ PRECISION = 1.59e-3
 E_EXACT = E_exact.real
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-custom_cf = ['shot_noise_5k', 'shot_noise_10k', 'noiseless']
+custom_cf_mitigate = ['gate_noise_5k', 'gate_noise_zne_linear_5k_4p', 'gate_noise_zne_richardson_5k', 'gate_noise_zne_exponential_5k','gate_noise_exact', 'gate_noise_zne_linear_exact_4p', 'gate_noise_zne_richardson_exact', 'gate_noise_zne_exponential_exact']
+custom_cf = ['gate_noise_1k', 'gate_noise_5k', 'gate_noise_10k', 'gate_noise_exact', 'shot_noise_100', 'shot_noise_1k', 'shot_noise_5k', 'shot_noise_10k', 'noiseless']
 custom_opt = ['mpi_hopso']
-setting = 'cf'
+setting = ''
 
 cost_function_labels = {
     'noiseless': 'Noiseless',
@@ -26,10 +27,16 @@ cost_function_labels = {
     'shot_noise_1k': '1000',
     'shot_noise_5k': '5000',
     'shot_noise_10k': '10000',
-    'gate_noise_1k':    '1000',
-    'gate_noise_5k':    '5000',
-    'gate_noise_exact': 'No shot noise',
-    'gate_noise_10k': '10000'
+    'gate_noise_1k':    'Gate noise 1000',
+    'gate_noise_5k':    'Gate noise 5000',
+    'gate_noise_exact': 'Gate noise no shots',
+    'gate_noise_10k': 'Gate noise 10000',
+    'gate_noise_zne_linear_5k_4p': 'Linear 5000',
+    'gate_noise_zne_richardson_5k': 'Richardson 5000',
+    'gate_noise_zne_exponential_5k': 'Exponential 5000',
+    'gate_noise_zne_linear_exact_4p': 'Linear no shots', 
+    'gate_noise_zne_richardson_exact': 'Richardson no shots', 
+    'gate_noise_zne_exponential_exact': 'Exponential no shots'
     # ... add all your cost functions
 }
 
@@ -251,17 +258,19 @@ def custom(setting):
         #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
         #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
 
-        plt.title(f"Shot noise (5000, 10000, Noiseless)")
+        plt.title(f"Noise")
         plt.ylabel("Energy (Hartree)")
-        plt.xlabel("Shots")
+        plt.xlabel("Method and Shots")
         plt.xticks(rotation=45)
         plt.tight_layout()
         # Sanitize filename
-        out_path = os.path.join(OUTPUT_DIR, f"boxplot_shot_noise_closeup.png")
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_noise_all.png")
         plt.savefig(out_path, dpi=150)
         plt.close()
         print(f"Saved: {out_path}")
 
 
-custom(setting)
+#custom(setting)
+per_cf()
+per_optimizer()
 print("All box plots generated.")
