@@ -11,15 +11,47 @@ from io import StringIO
 
 # Configuration
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "results")
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "graphs")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "graphs_temp")
 PRECISION = 1.59e-3
 E_EXACT = E_exact.real
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 custom_cf_mitigate = ['gate_noise_5k', 'gate_noise_zne_linear_5k_4p', 'gate_noise_zne_richardson_5k', 'gate_noise_zne_exponential_5k','gate_noise_exact', 'gate_noise_zne_linear_exact_4p', 'gate_noise_zne_richardson_exact', 'gate_noise_zne_exponential_exact']
-custom_cf = ['gate_noise_1k', 'gate_noise_5k', 'gate_noise_10k', 'gate_noise_exact', 'shot_noise_100', 'shot_noise_1k', 'shot_noise_5k', 'shot_noise_10k', 'noiseless']
+custom_cf_mitiq = [
+    'gate_noise_zne_richardson_5k',
+    'gate_noise_zne_richardson_exact',
+    'gate_noise_zne_linear_5k',
+    'gate_noise_zne_linear_exact',
+    'gate_noise_zne_mitiq_linear_5k', 
+    'gate_noise_zne_mitiq_richardson_5k', 
+    'gate_noise_zne_mitiq_linear_exact', 
+    'gate_noise_zne_mitiq_richardson_exact'
+            ]
+custom_cf_12particles = [
+    'gate_noise_zne_richardson_5k',
+    'gate_noise_zne_richardson_exact',
+    'gate_noise_zne_exponential_5k',
+    'gate_noise_zne_exponential_exact', 
+    'gate_noise_zne_linear_5k',
+    'gate_noise_zne_linear_exact',
+    'gate_noise_zne_linear_5k_12particles',
+    'gate_noise_zne_linear_exact_12particles',
+    'gate_noise_zne_richardson_5k_12particles',
+    'gate_noise_zne_richardson_exact_12particles',
+    'gate_noise_zne_exponential_5k_12particles',
+    'gate_noise_zne_exponential_exact_12particles'
+]
+custom_cf = [
+    'gate_noise_5k_postzne_richardson_5k_sf1_2_3',
+    'gate_noise_exact_postzne_richardson_exact_sf1_2_3',
+    'gate_noise_5k_postpec_5k_s1000_global',
+    'gate_noise_exact_postpec_exact_s1000_global',
+    'gate_noise_exact',
+    'gate_noise_5k',
+]
+
 custom_opt = ['mpi_hopso']
-setting = ''
+setting = 'cf' # cf or opt
 
 cost_function_labels = {
     'noiseless': 'Noiseless',
@@ -31,12 +63,33 @@ cost_function_labels = {
     'gate_noise_5k':    'Gate noise 5000',
     'gate_noise_exact': 'Gate noise no shots',
     'gate_noise_10k': 'Gate noise 10000',
-    'gate_noise_zne_linear_5k_4p': 'Linear 5000',
-    'gate_noise_zne_richardson_5k': 'Richardson 5000',
-    'gate_noise_zne_exponential_5k': 'Exponential 5000',
-    'gate_noise_zne_linear_exact_4p': 'Linear no shots', 
-    'gate_noise_zne_richardson_exact': 'Richardson no shots', 
-    'gate_noise_zne_exponential_exact': 'Exponential no shots'
+    'gate_noise_zne_linear_5k': 'Custom, 5000',
+    'gate_noise_zne_richardson_5k': 'Custom, 5000',
+    'gate_noise_zne_exponential_5k': 'Custom, 5000',
+    'gate_noise_zne_linear_exact': 'Custom, no shots',
+    'gate_noise_zne_richardson_exact': 'Custom, no shots',
+    'gate_noise_zne_exponential_exact': 'Custom, no shots',
+    'gate_noise_zne_mitiq_linear_5k': 'Mitiq, 5000',
+    'gate_noise_zne_mitiq_richardson_5k': 'Mitiq, 5000',
+    'gate_noise_zne_mitiq_exponential_5k': 'Mitiq, 5000',
+    'gate_noise_zne_mitiq_linear_exact': 'Mitiq, no shots',
+    'gate_noise_zne_mitiq_richardson_exact': 'Mitiq, no shots',
+    'gate_noise_zne_mitiq_exponential_exact': 'Mitiq, no shots',
+    'gate_noise_zne_linear_5k_12particles': '5000, 12 particles',
+    'gate_noise_zne_linear_exact_12particles': 'no shots, 12 particles',
+    'gate_noise_zne_richardson_5k_12particles': '5000, 12 particles',
+    'gate_noise_zne_richardson_exact_12particles': 'no shots, 12 particles',
+    'gate_noise_zne_exponential_5k_12particles': '5000, 12 particles',
+    'gate_noise_zne_exponential_exact_12particles': 'no shots, 12 particles',
+    'gate_noise_5k_postzne_exponential_5k_sf1_2_3': 'Exponential 5000',
+    'gate_noise_exact_postzne_exponential_exact_sf1_2_3': 'Exponential no shots',
+    'gate_noise_5k_postzne_richardson_5k_sf1_2_3': 'Richardson 5000 (after opt)',
+    'gate_noise_exact_postzne_richardson_exact_sf1_2_3': 'Richardson no shots (after opt)',
+    'gate_noise_5k_postzne_linear_5k_sf1_2_3': 'Linear 5000',
+    'gate_noise_exact_postzne_linear_exact_sf1_2_3': 'Linear no shots',
+    'gate_noise_5k_postpec_5k_s1000_global': 'PEC 5000',
+    'gate_noise_exact_postpec_exact_s1000_global': 'PEC no shots',
+
     # ... add all your cost functions
 }
 
@@ -258,19 +311,114 @@ def custom(setting):
         #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
         #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
 
-        plt.title(f"Noise")
+        plt.title(f"Probabilistic Error Cancellation Performance")
         plt.ylabel("Energy (Hartree)")
         plt.xlabel("Method and Shots")
         plt.xticks(rotation=45)
         plt.tight_layout()
         # Sanitize filename
-        out_path = os.path.join(OUTPUT_DIR, f"boxplot_noise_all.png")
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_postpec.png")
         plt.savefig(out_path, dpi=150)
         plt.close()
         print(f"Saved: {out_path}")
 
+def check_type(str, type):
+    if type in str :
+        return True
+    else: 
+        False
 
-#custom(setting)
-per_cf()
-per_optimizer()
+def custom_multiple(setting):
+    if(setting == 'cf'):
+        custom = custom_opt
+        attr = 'optimizer'
+        x = 'cost_function'
+        x_label_map = cost_function_labels
+        order = custom_cf
+    else:
+        custom = custom_cf
+        attr = 'cost_function'
+        x = 'optimizer'
+        x_label_map = optimizer_labels
+        order = custom_opt
+
+    subset = combined[combined['optimizer'] == 'mpi_hopso']
+    subset1 = subset[subset['cost_function'].str.contains('linear')]
+    subset2 = subset[subset['cost_function'].str.contains('richardson')]
+    #subset3 = subset[subset['cost_function'].str.contains('exponential')]
+    melted_1 = subset1.melt(
+        id_vars=[x],
+        value_vars=['final_energy', 'real_energy'],
+        var_name='energy_type',
+        value_name='energy'
+    )
+    melted_2 = subset2.melt(
+        id_vars=[x],
+        value_vars=['final_energy', 'real_energy'],
+        var_name='energy_type',
+        value_name='energy'
+    )
+
+    melted_1[x] = melted_1[x].map(x_label_map)
+    melted_1['energy_type'] = melted_1['energy_type'].map(energy_type_labels)
+    melted_2[x] = melted_2[x].map(x_label_map)
+    melted_2['energy_type'] = melted_2['energy_type'].map(energy_type_labels)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 14))
+
+    labeled_order = [x_label_map[raw] for raw in order]
+    present_in_1 = [cat for cat in labeled_order if cat in melted_1[x].unique()]
+    present_in_2 = [cat for cat in labeled_order if cat in melted_2[x].unique()]
+
+    color_dict = {'Reported Energy': 'steelblue', 'Actual Energy': 'darkorange'}
+    sns.boxplot(data=melted_1, x=x, y='energy', hue='energy_type', order=present_in_1, width=0.2, showfliers=False, ax=ax1, palette=color_dict)
+    sns.boxplot(data=melted_2, x=x, y='energy', hue='energy_type', order=present_in_2, width=0.2, showfliers=False, ax=ax2, palette=color_dict)
+    #sns.boxplot(data=melted_3, x=x, y='energy', hue='energy_type', order=labeled_order, width=0.2, showfliers=False, ax=ax3, palette=color_dict)
+    ax1.set_title('Linear ZNE')
+    ax2.set_title('Richardson ZNE')
+    
+    ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+    ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+    #ax3.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+    ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+    ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    ax2.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    ax2.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+    ax2.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    #ax3.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
+    #ax3.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+    #ax3.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
+    ax1.legend()
+    ax2.legend()
+    #ax3.legend()
+    ax1.xaxis.set_tick_params(rotation=45)
+    ax2.xaxis.set_tick_params(rotation=45)
+    #ax3.xaxis.set_tick_params(rotation=45)
+
+    fig.tight_layout(rect=[0.03, 0.03, 1, 0.95])
+    fig.supylabel("Energy (Hartree)")          
+    fig.supxlabel("Method and Shots")
+
+    ax1.set_xlabel('')
+    ax2.set_xlabel('')
+    #ax3.set_xlabel('')
+    ax1.set_ylabel('')
+    ax2.set_ylabel('')
+    #ax3.set_ylabel('')
+
+    #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
+    #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
+
+    # Sanitize filename
+    out_path = os.path.join(OUTPUT_DIR, f"boxplot_mitiq.png")
+    plt.savefig(out_path, dpi=150)
+    plt.close()
+    print(f"Saved: {out_path}")
+
+
+custom(setting)
+#per_cf()
+#per_optimizer()
+#custom_multiple(setting)
 print("All box plots generated.")

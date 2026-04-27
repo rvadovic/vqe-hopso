@@ -12,7 +12,13 @@ from src.costF.costF_4q_H2_qiskit import (
     gate_noise_zne_linear_exact,
     prepare_estimators_zne_exact,
     prepare_estimators_zne_5k,
-    gate_noise_zne_richardson_exact
+    gate_noise_zne_richardson_exact,
+    fakeAthensV2_5k,
+    fakeAthensV2_exact,
+    fakeBogotaV2_5k,
+    fakeBogotaV2_exact,
+    fakeManilaV2_5k,
+    fakeManilaV2_exact
 )
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
@@ -25,7 +31,7 @@ from src.utils.result_handler_csv import write_to_csv
 
 
 optimizers = [cobyla,de]
-costfs = [gate_noise_zne_richardson_exact]
+costfs = [fakeManilaV2_exact, fakeAthensV2_exact, fakeBogotaV2_exact, fakeAthensV2_5k, fakeManilaV2_5k, fakeBogotaV2_5k]
 
 
 runs = 100
