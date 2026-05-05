@@ -41,6 +41,12 @@ from src.costF.costF_4q_H2_qiskit import (noiseless,
         gate_noise_zne_mitiq_exponential_exact, 
         gate_noise_zne_mitiq_linear_exact, 
         gate_noise_zne_mitiq_richardson_exact,
+        fakeAthensV2_5k_linear,
+        fakeAthensV2_exact_linear,
+        fakeBogotaV2_5k_linear,
+        fakeBogotaV2_exact_linear,
+        fakeManilaV2_5k_linear,
+        fakeManilaV2_exact_linear
         )
 
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
@@ -77,6 +83,12 @@ def main():
         "fakeManilaV2_exact": fakeManilaV2_exact,
         "fakeAthensV2_exact": fakeAthensV2_exact,
         "fakeBogotaV2_exact": fakeBogotaV2_exact,
+        "fakeManilaV2_5k_linear": fakeManilaV2_5k_linear,
+        "fakeAthensV2_5k_linear": fakeAthensV2_5k_linear,
+        "fakeBogotaV2_5k_linear": fakeBogotaV2_5k_linear,
+        "fakeManilaV2_exact_linear": fakeManilaV2_exact_linear,
+        "fakeAthensV2_exact_linear": fakeAthensV2_exact_linear,
+        "fakeBogotaV2_exact_linear": fakeBogotaV2_exact_linear,
         "gate_noise_1k": gate_noise_1k,
         "gate_noise_5k": gate_noise_5k,
         "gate_noise_10k": gate_noise_10k,
@@ -149,11 +161,16 @@ def main():
 
     if(cost_F.__name__.startswith("gate_noise_zne")):
         if(cost_F.__name__.endswith("exact")):
-            prepare_estimators_zne_exact()
+            prepare = prepare_estimators_zne_exact()
         elif(cost_F.__name__.endswith("5k")):
-            prepare_estimators_zne_5k()
+            prepare = prepare_estimators_zne_5k()
         elif(cost_F.__name__.endswith("100k")):
-            prepare_estimators_zne_100k()
+            prepare = prepare_estimators_zne_100k()
+            
+        for r in range(size):
+            if rank == r:
+                prepare()
+            comm.Barrier()
 
     # Run HOPSO
     for i in range(runs):

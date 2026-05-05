@@ -395,6 +395,30 @@ def execute_10k(circuit):
     job = estimator_gate_noise_10k.run([circuit], [H])
     return job.result().values[0]
 
+def execute_exact_athens(circuit):
+    job = estimator_fakeAthensV2_exact.run([circuit], [H_5q])
+    return job.result().values[0]
+
+def execute_5k_athens(circuit):
+    job = estimator_fakeAthensV2.run([circuit], [H_5q])
+    return job.result().values[0]
+
+def execute_exact_bogota(circuit):
+    job = estimator_fakeBogotaV2_exact.run([circuit], [H_5q])
+    return job.result().values[0]
+
+def execute_5k_bogota(circuit):
+    job = estimator_fakeBogotaV2.run([circuit], [H_5q])
+    return job.result().values[0]
+
+def execute_exact_manila(circuit):
+    job = estimator_fakeManilaV2_exact.run([circuit], [H_5q])
+    return job.result().values[0]
+
+def execute_5k_manila(circuit):
+    job = estimator_fakeManilaV2.run([circuit], [H_5q])
+    return job.result().values[0]
+
 def mitiq_extrapolate(angles, sf, method, shots):
     if method == 'linear':
         factory = zne.inference.LinearFactory(sf)
@@ -413,6 +437,47 @@ def mitiq_extrapolate(angles, sf, method, shots):
         energies = [execute_10k(c) for c in folded_circuits]
     elif shots == None:
         energies = [execute_exact(c) for c in folded_circuits]
+
+    mitigated = zne.combine_results(sf, energies, extrapolation_method)
+    return mitigated
+
+def mitiq_extrapolate_backends(angles, sf, method, shots, backend):
+    if method == 'linear':
+        factory = zne.inference.LinearFactory(sf)
+    elif method == 'richardson':
+        factory = zne.inference.RichardsonFactory(sf)
+    elif method == 'exponential':
+        factory = zne.inference.ExpFactory(sf, asymptote=0.0)
+
+    extrapolation_method = factory.extrapolate
+
+    
+    if shots == 5000:
+        if backend == 'athens':
+            circuit = transpiled_ansatz_athens.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_5k_athens(c) for c in folded_circuits]
+        elif backend == 'bogota':
+            circuit = transpiled_ansatz_bogota.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_5k_bogota(c) for c in folded_circuits]
+        elif backend == 'manila':
+            circuit = transpiled_ansatz_manila.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_5k_manila(c) for c in folded_circuits]
+    elif shots == None:
+        if backend == 'athens':
+            circuit = transpiled_ansatz_athens.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_exact_athens(c) for c in folded_circuits]
+        elif backend == 'bogota':
+            circuit = transpiled_ansatz_bogota.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_exact_bogota(c) for c in folded_circuits]
+        elif backend == 'manila':
+            circuit = transpiled_ansatz_manila.assign_parameters(angles)
+            folded_circuits = zne.construct_circuits(circuit=circuit, scale_factors=sf, scale_method=fold_gates_at_random)
+            energies = [execute_exact_manila(c) for c in folded_circuits]
 
     mitigated = zne.combine_results(sf, energies, extrapolation_method)
     return mitigated
@@ -559,6 +624,22 @@ def fakeAthensV2_exact(angles):
     return energy
 
 def fakeBogotaV2_exact(angles):
-    job = estimator_fakeBogotaV2_exact.run([transpiled_ansatz_bogota], [H_5q], [angles])
-    energy = job.result().values[0]
-    return energy
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=None, backend='bogota')
+
+def fakeManilaV2_5k_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=5000, backend='manila')
+
+def fakeAthensV2_5k_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=5000, backend='athens')
+
+def fakeBogotaV2_5k_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=5000, backend='bogota')
+
+def fakeManilaV2_exact_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=None, backend='manila')
+
+def fakeAthensV2_exact_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=None, backend='athens')
+
+def fakeBogotaV2_exact_linear(angles):
+    return mitiq_extrapolate_backends(angles, scale_factors, method='linear', shots=None, backend='bogota')

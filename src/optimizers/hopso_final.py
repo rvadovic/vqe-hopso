@@ -3,9 +3,8 @@ import numpy as np
 # Configuration
 
 hp = [1, 1, 2*np.pi, 0.0583333333] #w1, w2, tm, lambda
-num_particles = 10
 max_cut = 2.05
-max_iterations = 600
+max_iterations = 500
 
 def velocities_for_target_amplitude(positions, attractors, A_target, omega=1.0, lamb=0.05, rng=None):
     """
@@ -37,31 +36,29 @@ def attractor_calc(p, g, w1, w2):
     a     = g + alpha * diff
     return wrap_pi(a)          # keep in (-π, π]
 
-def hopso(cost_fn, dimension):
+def hopso(cost_fn, dimension, budget, seed):
     """
     Demonstration: each particle updates its attractor/amplitude/theta
     IMMEDIATELY after it finds a better personal best.
     Then, at the end of each iteration, we check global best and do
     a SWARM-WIDE attractor/amplitude/theta update if there's a new global best.
     """
-
-    import numpy as np
-    #from tqdm import tqdm
-
+    num_particles = budget // max_iterations
     # Unpack hyperparameters
     w1, w2, tm, lamb = hp
-
+    lamb = 35 // max_iterations
     omega = 1.0
 
     # Initialize positions and velocities
-    positions = np.random.uniform(-np.pi, np.pi, size=(num_particles, dimension))
+    rng = np.random.default_rng(seed)
+    positions =  rng.uniform(-np.pi, np.pi, size=(num_particles, dimension))
     A_target = np.pi 
     #particle_vels = np.random.uniform(-np.pi/2, np.pi/2, size=(num_particles, dimension))
     
 
     # Personal best
     personal_best_positions = positions.copy()
-    personal_best_values = np.array(cost_fn(positions))
+    personal_best_values = np.array([cost_fn(p) for p in personal_best_positions])
 
     # Global best
     gbest_idx = np.argmin(personal_best_values)
@@ -79,7 +76,7 @@ def hopso(cost_fn, dimension):
     # Compute initial attractors
 
     attractors = attractor_calc(personal_best_positions, global_best_position, w1, w2)
-    particle_vels = velocities_for_target_amplitude(positions, attractors, A_target, omega, lamb)
+    particle_vels = velocities_for_target_amplitude(positions, attractors, A_target, omega, lamb, rng)
 
 
     # Initial amplitude
@@ -109,7 +106,7 @@ def hopso(cost_fn, dimension):
                 continue
 
             # Evolve time & amplitude
-            delta_t = np.random.rand(dimension)*tm
+            delta_t =  rng.random(dimension)*tm
             t[i] += delta_t
             A[i] *= np.exp(-lamb * delta_t)
 
@@ -125,8 +122,7 @@ def hopso(cost_fn, dimension):
                                         - lamb*np.cos(omega*t[i] + theta[i]))
 
             # Evaluate cost
-            position = positions[i].reshape(1, dimension)
-            current_value = cost_fn(position)[0]
+            current_value = cost_fn(positions[i])
             #print(current_value,i)
 
             # -------------
@@ -205,4 +201,4 @@ def hopso(cost_fn, dimension):
         gb_run_history.append(global_best_value)
         iteration += 1
 
-    return global_best_value
+    return global_best_value, global_best_position

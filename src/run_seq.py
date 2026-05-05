@@ -30,8 +30,9 @@ from time import perf_counter
 from src.utils.result_handler_csv import write_to_csv
 
 
-optimizers = [cobyla,de]
-costfs = [fakeManilaV2_exact, fakeAthensV2_exact, fakeBogotaV2_exact, fakeAthensV2_5k, fakeManilaV2_5k, fakeBogotaV2_5k]
+optimizers = [hopso]
+costfss = [fakeManilaV2_exact, fakeAthensV2_exact, fakeBogotaV2_exact, fakeAthensV2_5k, fakeManilaV2_5k, fakeBogotaV2_5k]
+costfs = [noiseless]
 
 
 runs = 100

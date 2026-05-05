@@ -42,32 +42,27 @@ custom_cf_12particles = [
     'gate_noise_zne_exponential_exact_12particles'
 ]
 custom_cf = [
-    'gate_noise_5k_postzne_richardson_5k_sf1_2_3',
-    'gate_noise_exact_postzne_richardson_exact_sf1_2_3',
-    'gate_noise_5k_postpec_5k_s1000_global',
-    'gate_noise_exact_postpec_exact_s1000_global',
-    'gate_noise_exact',
-    'gate_noise_5k',
-]
+    'noiseless',
+    ]
 
-custom_opt = ['mpi_hopso']
-setting = 'cf' # cf or opt
+custom_opt = ['mpi_hopso', 'pso', 'de', 'cobyla']
+setting = '' # cf or opt
 
 cost_function_labels = {
     'noiseless': 'Noiseless',
     'shot_noise_100': '100',
     'shot_noise_1k': '1000',
-    'shot_noise_5k': '5000',
+    'shot_noise_5k': 'Shot noise 5000',
     'shot_noise_10k': '10000',
     'gate_noise_1k':    'Gate noise 1000',
-    'gate_noise_5k':    'Gate noise 5000',
-    'gate_noise_exact': 'Gate noise no shots',
+    'gate_noise_5k':    'Combined gate noise',
+    'gate_noise_exact': 'Isolated gate noise',
     'gate_noise_10k': 'Gate noise 10000',
-    'gate_noise_zne_linear_5k': 'Custom, 5000',
+    'gate_noise_zne_linear_5k': 'Linear 5000',
     'gate_noise_zne_richardson_5k': 'Custom, 5000',
     'gate_noise_zne_exponential_5k': 'Custom, 5000',
     'gate_noise_zne_linear_exact': 'Custom, no shots',
-    'gate_noise_zne_richardson_exact': 'Custom, no shots',
+    'gate_noise_zne_richardson_exact': 'Richardson, no shots',
     'gate_noise_zne_exponential_exact': 'Custom, no shots',
     'gate_noise_zne_mitiq_linear_5k': 'Mitiq, 5000',
     'gate_noise_zne_mitiq_richardson_5k': 'Mitiq, 5000',
@@ -93,11 +88,12 @@ cost_function_labels = {
     # ... add all your cost functions
 }
 
-# Mappings for optimizers
 optimizer_labels = {
-    'mpi_hopso': 'MPI HOPSO',
-    'opt2': 'Optimizer 2',
-    'opt3': 'Optimizer 3',
+    'mpi_hopso': 'HOPSO',
+    'mpi_pso': 'PSO',
+    'de': 'DE',
+    'cobyla': 'COBYLA',
+    'pso': 'PSO'
     # ... add all your optimizers
 }
 
@@ -282,6 +278,7 @@ def custom(setting):
         attr = 'cost_function'
         x = 'optimizer'
         x_label_map = optimizer_labels
+        y_label_map = cost_function_labels
         order = custom_opt
     for i in custom:
         subset = combined[combined[attr] == i]
@@ -304,20 +301,20 @@ def custom(setting):
         sns.boxplot(data=melted, x=x, y='energy', hue='energy_type', order=labeled_order, width=0.2, showfliers=False, ax=ax1, palette=color_dict)
         ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
         ax1.axhline(y=E_EXACT, color='green', linestyle='-', linewidth=1.5, label=f'Exact: {E_EXACT:.4f}')
-        ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
+        #ax1.axhline(y=E_EXACT - PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=None)
         ax1.axhline(y=E_EXACT + PRECISION, color='red', linestyle='--', linewidth=1, alpha=0.7, label=f'Chem. acc. (±{PRECISION:.4f})')
         ax1.legend()
 
         #sns.boxplot(data=subset, x='optimizer', y='real_energy', order=optimizers, width=0.2, showfliers=False, ax=ax2)
         #ax2.yaxis.set_major_formatter(plt.FormatStrFormatter('%.4f'))
 
-        plt.title(f"Probabilistic Error Cancellation Performance")
+        plt.title(f"{y_label_map[i]}")
         plt.ylabel("Energy (Hartree)")
-        plt.xlabel("Method and Shots")
+        plt.xlabel("Optimizer")
         plt.xticks(rotation=45)
         plt.tight_layout()
         # Sanitize filename
-        out_path = os.path.join(OUTPUT_DIR, f"boxplot_postpec.png")
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_optimizers_{i}.png")
         plt.savefig(out_path, dpi=150)
         plt.close()
         print(f"Saved: {out_path}")
@@ -417,8 +414,8 @@ def custom_multiple(setting):
     print(f"Saved: {out_path}")
 
 
-custom(setting)
-#per_cf()
-#per_optimizer()
+#custom(setting)
+per_cf()
+per_optimizer()
 #custom_multiple(setting)
 print("All box plots generated.")
