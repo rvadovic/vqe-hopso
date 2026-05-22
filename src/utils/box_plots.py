@@ -41,12 +41,53 @@ custom_cf_12particles = [
     'gate_noise_zne_exponential_5k_12particles',
     'gate_noise_zne_exponential_exact_12particles'
 ]
-custom_cf = [
-    'noiseless',
+custom_cf_backends = [
+    'fakeAthensV2_exact',
+    'fakeBogotaV2_exact',
+    'fakeManilaV2_exact',
+    'fakeAthensV2_5k',
+    'fakeBogotaV2_5k',
+    'fakeManilaV2_5k',
     ]
+custom_cf = [
+    'gate_noise_real_5k',
+    'gate_noise_zne_linear_5k_real',
+    'gate_noise_zne_richardson_5k_real',
+    'gate_noise_zne_exponential_5k_real',
+    'gate_noise_real_exact',
+    'gate_noise_zne_linear_exact_real',
+    'gate_noise_zne_richardson_exact_real',
+    'gate_noise_zne_exponential_exact_real',
+]
+custom_cf_all = [
+    'gate_noise_5k',
+    'gate_noise_zne_linear_5k',
+    'gate_noise_zne_richardson_5k',
+    'gate_noise_zne_exponential_5k',
+    'gate_noise_exact',
+    'gate_noise_zne_linear_exact',
+    'gate_noise_zne_richardson_exact',
+    'gate_noise_zne_exponential_exact',
+    'gate_noise_default_5k',
+    'gate_noise_zne_linear_5k_def',
+    'gate_noise_zne_richardson_5k_def',
+    'gate_noise_zne_exponential_5k_def',
+    'gate_noise_default_exact',
+    'gate_noise_zne_linear_exact_def',
+    'gate_noise_zne_richardson_exact_def',
+    'gate_noise_zne_exponential_exact_def',
+    'gate_noise_real_5k',
+    'gate_noise_zne_linear_5k_real',
+    'gate_noise_zne_richardson_5k_real',
+    'gate_noise_zne_exponential_5k_real',
+    'gate_noise_real_exact',
+    'gate_noise_zne_linear_exact_real'
+    'gate_noise_zne_richardson_exact_real',
+    'gate_noise_zne_exponential_exact_real',
+]
 
-custom_opt = ['mpi_hopso', 'pso', 'de', 'cobyla']
-setting = '' # cf or opt
+custom_opt = ['mpi_hopso']
+setting = 'cf' # cf or opt
 
 cost_function_labels = {
     'noiseless': 'Noiseless',
@@ -55,15 +96,15 @@ cost_function_labels = {
     'shot_noise_5k': 'Shot noise 5000',
     'shot_noise_10k': '10000',
     'gate_noise_1k':    'Gate noise 1000',
-    'gate_noise_5k':    'Combined gate noise',
-    'gate_noise_exact': 'Isolated gate noise',
+    'gate_noise_5k':    'D1, 5k shots',
+    'gate_noise_exact': 'D1, no shots',
     'gate_noise_10k': 'Gate noise 10000',
-    'gate_noise_zne_linear_5k': 'Linear 5000',
-    'gate_noise_zne_richardson_5k': 'Custom, 5000',
-    'gate_noise_zne_exponential_5k': 'Custom, 5000',
-    'gate_noise_zne_linear_exact': 'Custom, no shots',
-    'gate_noise_zne_richardson_exact': 'Richardson, no shots',
-    'gate_noise_zne_exponential_exact': 'Custom, no shots',
+    'gate_noise_zne_linear_5k': 'D1, Linear, 5k shots',
+    'gate_noise_zne_richardson_5k': 'D1, Richardson, 5000',
+    'gate_noise_zne_exponential_5k': 'D1, Exponential, 5000',
+    'gate_noise_zne_linear_exact': 'D1, Linear, no shots',
+    'gate_noise_zne_richardson_exact': 'D1, Richardson, no shots',
+    'gate_noise_zne_exponential_exact': 'D1, Exponential, no shots',
     'gate_noise_zne_mitiq_linear_5k': 'Mitiq, 5000',
     'gate_noise_zne_mitiq_richardson_5k': 'Mitiq, 5000',
     'gate_noise_zne_mitiq_exponential_5k': 'Mitiq, 5000',
@@ -84,6 +125,30 @@ cost_function_labels = {
     'gate_noise_exact_postzne_linear_exact_sf1_2_3': 'Linear no shots',
     'gate_noise_5k_postpec_5k_s1000_global': 'PEC 5000',
     'gate_noise_exact_postpec_exact_s1000_global': 'PEC no shots',
+    'fakeAthensV2_exact': 'AthensV2, no shots',
+    'fakeAthensV2_5k': 'AthensV2, 5000 shots',
+    'fakeAthensV2_exact_linear': 'Linear, no shots',
+    'fakeAthensV2_5k_linear': 'Linear, 5000 shots',
+    'fakeBogotaV2_exact': 'BogotaV2, no shots',
+    'fakeBogotaV2_5k': 'BogotaV2, 5000 shots',
+    'fakeManilaV2_exact': 'ManilaV2, no shots',
+    'fakeManilaV2_5k': 'ManilaV2, 5000 shots',
+    'gate_noise_default_5k': 'D2, 5k shots',
+    'gate_noise_default_exact': 'D2, no shots',
+    'gate_noise_real_5k': 'D3, 5k shots',
+    'gate_noise_real_exact': 'D3, no shots',
+    'gate_noise_zne_linear_5k_def': 'D2, Linear, 5k shots',
+    'gate_noise_zne_linear_exact_def': 'D2, Linear, no shots',
+    'gate_noise_zne_linear_5k_real': 'D3, Linear, 5k shots',
+    'gate_noise_zne_linear_exact_real': 'D3, Linear, no shots',
+    'gate_noise_zne_richardson_5k_def': 'D2, Richardson, 5k shots',
+    'gate_noise_zne_richardson_exact_def': 'D2, Richardson, no shots',
+    'gate_noise_zne_richardson_5k_real': 'D3, Richardson, 5k shots',
+    'gate_noise_zne_richardson_exact_real': 'D3, Richardson, no shots',
+    'gate_noise_zne_exponential_5k_def': 'D2, Exponential, 5k shots',
+    'gate_noise_zne_exponential_exact_def': 'D2, Exponential, no shots',
+    'gate_noise_zne_exponential_5k_real': 'D3, Exponential, 5k shots',
+    'gate_noise_zne_exponential_exact_real': 'D3, Exponential, no shots',
 
     # ... add all your cost functions
 }
@@ -272,6 +337,7 @@ def custom(setting):
         attr = 'optimizer'
         x = 'cost_function'
         x_label_map = cost_function_labels
+        y_label_map = optimizer_labels
         order = custom_cf
     else:
         custom = custom_cf
@@ -310,11 +376,11 @@ def custom(setting):
 
         plt.title(f"{y_label_map[i]}")
         plt.ylabel("Energy (Hartree)")
-        plt.xlabel("Optimizer")
+        plt.xlabel("Depolarizing noise type, ZNE method, shots")
         plt.xticks(rotation=45)
         plt.tight_layout()
         # Sanitize filename
-        out_path = os.path.join(OUTPUT_DIR, f"boxplot_optimizers_{i}.png")
+        out_path = os.path.join(OUTPUT_DIR, f"boxplot_D3_zne_{i}.png")
         plt.savefig(out_path, dpi=150)
         plt.close()
         print(f"Saved: {out_path}")
@@ -414,8 +480,8 @@ def custom_multiple(setting):
     print(f"Saved: {out_path}")
 
 
-#custom(setting)
-per_cf()
-per_optimizer()
+custom(setting)
+#per_cf()
+#per_optimizer()
 #custom_multiple(setting)
 print("All box plots generated.")

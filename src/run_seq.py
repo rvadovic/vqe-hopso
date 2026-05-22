@@ -4,6 +4,7 @@ import numpy as np
 #from costF.costF_8q_LiH import cost_fn_8qlih
 #from costF.costF_8q_LiH import ansatz as ansatz_8qlih
 from src.costF.costF_4q_H2_qiskit import (
+    fakeAthensV2_5k_linear,
     noiseless,
     shot_noise_5k,
     gate_noise_5k,
@@ -18,7 +19,9 @@ from src.costF.costF_4q_H2_qiskit import (
     fakeBogotaV2_5k,
     fakeBogotaV2_exact,
     fakeManilaV2_5k,
-    fakeManilaV2_exact
+    fakeManilaV2_exact,
+    fakeAthensV2_exact_linear,
+    fakeAthensV2_5k_linear
 )
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
 from src.costF.costF_4q_H2_qiskit import E_exact
@@ -30,9 +33,10 @@ from time import perf_counter
 from src.utils.result_handler_csv import write_to_csv
 
 
-optimizers = [hopso]
+optimizers = [de]
 costfss = [fakeManilaV2_exact, fakeAthensV2_exact, fakeBogotaV2_exact, fakeAthensV2_5k, fakeManilaV2_5k, fakeBogotaV2_5k]
-costfs = [noiseless]
+costfss = [noiseless]
+costfs = [fakeAthensV2_exact_linear]
 
 
 runs = 100
@@ -44,7 +48,7 @@ dimension = ansatz_h2.num_parameters
 
 for optimizer in optimizers:
     for costf in costfs:
-        budget = 6000
+        budget = 2000
         if(costf.__name__.startswith("gate_noise_zne")):
             if(costf.__name__.endswith("exact")):
                 prepare_estimators_zne_exact()

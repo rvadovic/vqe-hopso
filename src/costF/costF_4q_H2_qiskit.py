@@ -160,6 +160,95 @@ noise_model_depolarization.add_all_qubit_quantum_error(error2, ['cx'])
 #readout = ReadoutError([[1 - readout_prob, readout_prob], [readout_prob, 1 - readout_prob]])
 
 #noise_model_depolarization.add_all_qubit_readout_error(readout) # Not yet
+def_p1 = 0.001
+def_p2 = 0.01
+def_err1 = depolarizing_error(def_p1, 1)
+def_err2 = depolarizing_error(def_p2, 2)
+depolarization_default = NoiseModel()
+depolarization_default.add_all_qubit_quantum_error(def_err1, ['r'])
+depolarization_default.add_all_qubit_quantum_error(def_err2, ['cx'])
+
+estimator_gate_noise_default_exact = Estimator(
+    backend_options={
+        "noise_model": depolarization_default
+    },
+    run_options={
+        "shots": None
+    },
+    approximation=True
+)
+
+estimator_gate_noise_default_5k = Estimator(
+    backend_options={
+        "noise_model": depolarization_default
+    },
+    run_options={
+        "shots": 5000
+    }
+)
+
+estimator_gate_noise_default_10k = Estimator(
+    backend_options={
+        "noise_model": depolarization_default
+    },
+    run_options={
+        "shots": 10000
+    }
+)
+
+estimator_gate_noise_default_1k = Estimator(
+    backend_options={
+        "noise_model": depolarization_default
+    },
+    run_options={
+        "shots": 1000
+    }
+)
+
+real_p1 = 0.00015
+real_p2 = 0.00107
+real_err1 = depolarizing_error(real_p1, 1)
+real_err2 = depolarizing_error(real_p2, 2)
+depolarization_real = NoiseModel()
+depolarization_real.add_all_qubit_quantum_error(real_err1, ['r'])
+depolarization_real.add_all_qubit_quantum_error(real_err2, ['cx'])
+
+estimator_gate_noise_real_exact = Estimator(
+    backend_options={
+        "noise_model": depolarization_real
+    },
+    run_options={
+        "shots": None
+    },
+    approximation=True
+)
+
+estimator_gate_noise_real_5k = Estimator(
+    backend_options={
+        "noise_model": depolarization_real
+    },
+    run_options={
+        "shots": 5000
+    }
+)
+
+estimator_gate_noise_real_10k = Estimator(
+    backend_options={
+        "noise_model": depolarization_real
+    },
+    run_options={
+        "shots": 10000
+    }
+)
+
+estimator_gate_noise_real_1k = Estimator(
+    backend_options={
+        "noise_model": depolarization_real
+    },
+    run_options={
+        "shots": 1000
+    }
+)
 
 estimator_gate_noise_exact = Estimator(
     backend_options={
@@ -213,7 +302,8 @@ def extrapolate(sf, energies, method):
     elif method == 'exponential':
         try:
             p0 = [-1.46985, 0.923858]  # Initial guess: a, b
-            b0 = np.log(energies[1] / energies[0])   # ratio of adjacent points
+            #print(f"Energy 1: {energies[0]}, Energy 2: {energies[1]}, Energy 3: {energies[2]}")
+            b0 = np.log(abs(energies[1] / energies[0]))   # ratio of adjacent points
             a0 = energies[0] * np.exp(-b0)
             popt, _ = curve_fit(exp_function, sf, energies, p0=[a0, b0], maxfev=1000)
             return popt[0]  # a + c at x=0
@@ -308,6 +398,111 @@ def prepare_estimators_zne_100k():
         )
         estimators_zne.append(estimator)
 
+
+def prepare_estimators_zne_exact_default():
+    estimators_zne.clear()
+    for factor in scale_factors:
+        scaled_error1 = depolarizing_error(calc_probability(def_p1, factor), 1)
+        scaled_error2 = depolarizing_error(calc_probability(def_p2, factor), 2)
+
+        scaled_noise = NoiseModel()
+        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['r'])
+        scaled_noise.add_all_qubit_quantum_error(scaled_error2, ['cx'])
+
+        #readout_prob_scaled = calc_probability(readout_prob, factor)
+        #scaled_readout = ReadoutError([[1 - readout_prob_scaled, readout_prob_scaled], [readout_prob_scaled, 1 - readout_prob_scaled]])
+
+        #scaled_noise.add_all_qubit_readout_error(scaled_readout)
+
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": None
+            },
+            approximation=True
+        )
+
+        estimators_zne.append(estimator)
+
+def prepare_estimators_zne_5k_default():
+    estimators_zne.clear()
+    for factor in scale_factors:
+        scaled_error1 = depolarizing_error(calc_probability(def_p1, factor), 1)
+        scaled_error2 = depolarizing_error(calc_probability(def_p2, factor), 2)
+
+        scaled_noise = NoiseModel()
+        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['r'])
+        scaled_noise.add_all_qubit_quantum_error(scaled_error2, ['cx'])
+
+        #readout_prob_scaled = calc_probability(readout_prob, factor)
+        #scaled_readout = ReadoutError([[1 - readout_prob_scaled, readout_prob_scaled], [readout_prob_scaled, 1 - readout_prob_scaled]])
+
+        #scaled_noise.add_all_qubit_readout_error(scaled_readout)
+
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": 5000
+            }
+        )
+        estimators_zne.append(estimator)
+
+def prepare_estimators_zne_exact_real():
+    estimators_zne.clear()
+    for factor in scale_factors:
+        scaled_error1 = depolarizing_error(calc_probability(real_p1, factor), 1)
+        scaled_error2 = depolarizing_error(calc_probability(real_p2, factor), 2)
+
+        scaled_noise = NoiseModel()
+        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['r'])
+        scaled_noise.add_all_qubit_quantum_error(scaled_error2, ['cx'])
+
+        #readout_prob_scaled = calc_probability(readout_prob, factor)
+        #scaled_readout = ReadoutError([[1 - readout_prob_scaled, readout_prob_scaled], [readout_prob_scaled, 1 - readout_prob_scaled]])
+
+        #scaled_noise.add_all_qubit_readout_error(scaled_readout)
+
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": None
+            },
+            approximation=True
+        )
+
+        estimators_zne.append(estimator)
+
+def prepare_estimators_zne_5k_real():
+    estimators_zne.clear()
+    for factor in scale_factors:
+        scaled_error1 = depolarizing_error(calc_probability(real_p1, factor), 1)
+        scaled_error2 = depolarizing_error(calc_probability(real_p2, factor), 2)
+
+        scaled_noise = NoiseModel()
+        scaled_noise.add_all_qubit_quantum_error(scaled_error1, ['r'])
+        scaled_noise.add_all_qubit_quantum_error(scaled_error2, ['cx'])
+
+        #readout_prob_scaled = calc_probability(readout_prob, factor)
+        #scaled_readout = ReadoutError([[1 - readout_prob_scaled, readout_prob_scaled], [readout_prob_scaled, 1 - readout_prob_scaled]])
+
+        #scaled_noise.add_all_qubit_readout_error(scaled_readout)
+
+        estimator = Estimator(
+            backend_options={
+                "noise_model": scaled_noise
+            },
+            run_options={
+                "shots": 5000
+            }
+        )
+        estimators_zne.append(estimator)
+
 def gate_noise_zne_richardson_exact(angles):
     raw_energies = []
     for est in estimators_zne:
@@ -376,6 +571,102 @@ def gate_noise_zne_linear_100k(angles):
     return extrapolate(scale_factors, raw_energies, method='linear')
 
 def gate_noise_zne_exponential_100k(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='exponential')
+
+def gate_noise_zne_linear_exact_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+
+    return extrapolate(scale_factors, raw_energies, method='linear')
+
+def gate_noise_zne_richardson_exact_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='richardson')
+
+def gate_noise_zne_exponential_exact_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='exponential')
+
+def gate_noise_zne_richardson_5k_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='richardson')
+
+def gate_noise_zne_linear_5k_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+        
+    return extrapolate(scale_factors, raw_energies, method='linear')
+
+def gate_noise_zne_exponential_5k_def(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='exponential')
+
+def gate_noise_zne_linear_exact_real(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+
+    return extrapolate(scale_factors, raw_energies, method='linear')
+
+def gate_noise_zne_richardson_exact_real(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='richardson')
+
+def gate_noise_zne_exponential_exact_real(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='exponential')
+
+def gate_noise_zne_richardson_5k_real(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+    # extrapolate
+    return extrapolate(scale_factors, raw_energies, method='richardson')
+
+def gate_noise_zne_linear_5k_real(angles):
+    raw_energies = []
+    for est in estimators_zne:
+        job = est.run([ansatz], [H], [angles])
+        raw_energies.append(job.result().values[0])
+        
+    return extrapolate(scale_factors, raw_energies, method='linear')
+
+def gate_noise_zne_exponential_5k_real(angles):
     raw_energies = []
     for est in estimators_zne:
         job = est.run([ansatz], [H], [angles])
@@ -575,6 +866,46 @@ def shot_noise_100k(angles):
 
 def shot_noise_100(angles):
     job = estimator_shot_noise_100.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_default_exact(angles):
+    job = estimator_gate_noise_default_exact.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_default_5k(angles):
+    job = estimator_gate_noise_default_5k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_default_10k(angles):
+    job = estimator_gate_noise_default_10k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_default_1k(angles):
+    job = estimator_gate_noise_default_1k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_real_exact(angles):
+    job = estimator_gate_noise_real_exact.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_real_5k(angles):
+    job = estimator_gate_noise_real_5k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_real_10k(angles):
+    job = estimator_gate_noise_real_10k.run([ansatz], [H], [angles])
+    energy = job.result().values[0]
+    return energy
+
+def gate_noise_real_1k(angles):
+    job = estimator_gate_noise_real_1k.run([ansatz], [H], [angles])
     energy = job.result().values[0]
     return energy
 

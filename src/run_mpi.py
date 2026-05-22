@@ -46,7 +46,31 @@ from src.costF.costF_4q_H2_qiskit import (noiseless,
         fakeBogotaV2_5k_linear,
         fakeBogotaV2_exact_linear,
         fakeManilaV2_5k_linear,
-        fakeManilaV2_exact_linear
+        fakeManilaV2_exact_linear,
+        gate_noise_default_exact,
+        gate_noise_default_5k,
+        gate_noise_real_5k,
+        gate_noise_real_exact,
+        gate_noise_real_10k,
+        gate_noise_real_1k,
+        gate_noise_default_10k,
+        gate_noise_default_1k,
+        gate_noise_zne_linear_exact_def,
+        gate_noise_zne_richardson_exact_def,
+        gate_noise_zne_exponential_exact_def,
+        gate_noise_zne_linear_5k_def,
+        gate_noise_zne_richardson_5k_def,
+        gate_noise_zne_exponential_5k_def,
+        gate_noise_zne_linear_exact_real,
+        gate_noise_zne_richardson_exact_real,
+        gate_noise_zne_exponential_exact_real,
+        gate_noise_zne_linear_5k_real,
+        gate_noise_zne_richardson_5k_real,
+        gate_noise_zne_exponential_5k_real,
+        prepare_estimators_zne_5k_default,
+        prepare_estimators_zne_exact_default,
+        prepare_estimators_zne_5k_real,
+        prepare_estimators_zne_exact_real
         )
 
 from src.costF.costF_4q_H2_qiskit import ansatz as ansatz_h2
@@ -110,7 +134,27 @@ def main():
         "gate_noise_zne_mitiq_linear_100k": gate_noise_zne_mitiq_linear_100k,
         "gate_noise_zne_mitiq_richardson_100k": gate_noise_zne_mitiq_richardson_100k,
         "gate_noise_zne_mitiq_exponential_100k": gate_noise_zne_mitiq_exponential_100k,
-        "gate_noise_zne_richardson_100k": gate_noise_zne_richardson_100k
+        "gate_noise_zne_richardson_100k": gate_noise_zne_richardson_100k,
+        "gate_noise_default_exact": gate_noise_default_exact,
+        "gate_noise_default_5k": gate_noise_default_5k,
+        "gate_noise_default_10k": gate_noise_default_10k,
+        "gate_noise_default_1k": gate_noise_default_1k,
+        "gate_noise_real_exact": gate_noise_real_exact,
+        "gate_noise_real_5k": gate_noise_real_5k,
+        "gate_noise_real_10k": gate_noise_real_10k,
+        "gate_noise_real_1k": gate_noise_real_1k,
+        "gate_noise_zne_linear_exact_def": gate_noise_zne_linear_exact_def,
+        "gate_noise_zne_richardson_exact_def": gate_noise_zne_richardson_exact_def,
+        "gate_noise_zne_exponential_exact_def": gate_noise_zne_exponential_exact_def,
+        "gate_noise_zne_linear_5k_def": gate_noise_zne_linear_5k_def,
+        "gate_noise_zne_richardson_5k_def": gate_noise_zne_richardson_5k_def,
+        "gate_noise_zne_exponential_5k_def": gate_noise_zne_exponential_5k_def,
+        "gate_noise_zne_linear_exact_real": gate_noise_zne_linear_exact_real,
+        "gate_noise_zne_richardson_exact_real": gate_noise_zne_richardson_exact_real,
+        "gate_noise_zne_exponential_exact_real": gate_noise_zne_exponential_exact_real,
+        "gate_noise_zne_linear_5k_real": gate_noise_zne_linear_5k_real,
+        "gate_noise_zne_richardson_5k_real": gate_noise_zne_richardson_5k_real,
+        "gate_noise_zne_exponential_5k_real": gate_noise_zne_exponential_5k_real
     }
 
     cost_F = cost_F_mapping.get(args.cost_F)
@@ -160,12 +204,14 @@ def main():
         results = []
 
     if(cost_F.__name__.startswith("gate_noise_zne")):
-        if(cost_F.__name__.endswith("exact")):
-            prepare = prepare_estimators_zne_exact()
-        elif(cost_F.__name__.endswith("5k")):
-            prepare = prepare_estimators_zne_5k()
-        elif(cost_F.__name__.endswith("100k")):
-            prepare = prepare_estimators_zne_100k()
+        if(cost_F.__name__.endswith("exact_def")):
+            prepare = prepare_estimators_zne_exact_default
+        elif(cost_F.__name__.endswith("5k_def")):
+            prepare = prepare_estimators_zne_5k_default
+        elif(cost_F.__name__.endswith("exact_real")):
+            prepare = prepare_estimators_zne_exact_real
+        elif(cost_F.__name__.endswith("5k_real")):
+            prepare = prepare_estimators_zne_5k_real
             
         for r in range(size):
             if rank == r:
